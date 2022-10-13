@@ -71,11 +71,17 @@ When authentication of the user was successful you will recieve a user profile i
 
 Example request using curl
 
-`curl -X POST -H 'Content-Type: application/json' -d '{ "email": "users@email", "password": "superSecretPassword" }' https://api.incontext-research.com/v4/auth`
+```sh
+curl \
+  -X POST \
+  -H 'Content-Type: application/json' \
+  -d '{ "email": "users@email", "password": "superSecretPassword" }' \
+  https://api.incontext-research.com/v4/auth
+```
 
 Recieved response:
 
-```
+```json
 {
   "role": "user",
   "name": "username",
@@ -96,12 +102,17 @@ Recieved response:
 With the recieved token you can now make requests against our api (the explorer uses the token of the logged in user automatically, so you don't have to worry about this when exploring our api). To do so, set a header 'Authorization' with the value 'Bearer your.access.token'.
 
 Example token request ([view in explorer](https://portal.incontext-research.com/docs/explorer?query=%7B%0A++me+%7B%0A++++...+on+User+%7B%0A++++++name%0A++++%7D%0A++%7D%0A%7D%0A&variables=)):
-
-`curl -X POST -H 'Content-Type: application/json' -d '{ "query": "{ me { ...on User { name } }}" }' -H 'Authorization: Bearer your.access.token' https://api.incontext-research.com/v4/graphql`
-
+```sh
+curl \
+  -X POST \
+  -H 'Content-Type: application/json' \
+  -d '{ "query": "{ me { ...on User { name } }}" }' \
+  -H 'Authorization: Bearer your.access.token' \
+  https://api.incontext-research.com/v4/graphql
+```
 Results in:
 
-```
+```json
 {
   "data": {
     "me": {
@@ -123,23 +134,28 @@ To make an api secret based call, just either
 
 - include the secret as a query param:
 
-`https://api.incontext-research.com/v4/graphql?apiSecret=yourSecret`
+  `https://api.incontext-research.com/v4/graphql?apiSecret=yourSecret`
 
 - or set it as a header
 
-`Authorization: Secret your.team.secret`
+  `Authorization: Secret your.team.secret`
 
 Example call from above:
-
-`curl -X POST -H 'Content-Type: application/json' -d '{ "query": "{ me { ...on Team { name } }}" }' -H https://api.incontext-research.com/v4/graphql?apiSecret=yourSecret`
+```sh
+curl \
+  -X POST \
+  -H 'Content-Type: application/json' \
+  -d '{ "query": "{ me { ...on Team { name } }}" }' \
+  https://api.incontext-research.com/v4/graphql?apiSecret=yourSecret
+```
 
 Results in:
 
-```
+```jsonc
 {
   "data": {
     "me": {
-      "name": "default" # this is now your teams name
+      "name": "default" // this is now your teams name
     }
   }
 }
@@ -171,7 +187,7 @@ Note: first and last as well as after and before exclude each other. Means, that
 
 At the same time the response Object contains a lot of useful information for pagination through the list, it's best explained with an actual query ([view in explorer](https://portal.incontext-research.com/docs/explorer?query=%7B%0A++projects%28last%3A+2%29+%7B+%23+get+the+last+2+projects%0A++++pageInfo+%7B%0A++++++startCursor+%23+cursor+of+first+recieved+edge%0A++++++endCursor+%23+cursor+of+last+recieved+edge%0A++++++hasNextPage+%23+true+if+there+is+content+after+the+last+recieved+edge+%0A++++++hasPreviousPage+%23+true+if+there+is+content+before+the+first+recieved+edge%0A++++%7D%0A++++totalCount+%23+total+number+of+objects+you+can+recieve%0A++++nodes+%7B+%23+shortcut+to+nodes+in+case+you+don%27t+need+a+pagination+cursor%0A++++++...project%0A++++%7D%0A++++edges+%7B%0A++++++node+%7B+%23+the+content+itself%0A++++++++...project%0A++++++%7D%0A++++++cursor+%23+cursor+of+the+edge%2C+only+used+in+pagination+params%0A++++%7D%0A++%7D%0A%7D%0A%0Afragment+project+on+Project+%7B%0A++id%0A%7D&variables=)):
 
-```
+```graphql
 {
   projects(last: 2) { # get the last 2 projects
     pageInfo {
@@ -202,7 +218,7 @@ In a lot of cases you wont need the full capacities of pagination. The power of 
 
 For example if you want only retrieve the last 10 projects ([view in explorer](https://portal.incontext-research.com/docs/explorer?query=%7B%0A++projects%28last%3A+10%29+%7B%0A++++nodes+%7B%0A++++++...project%0A++++%7D%0A++%7D%0A%7D%0A%0Afragment+project+on+Project+%7B%0A++id%0A++description%0A%7D%0A&variables=)):
 
-```
+```graphql
 {
   projects(last: 10) {
     nodes {
@@ -223,7 +239,7 @@ Some of our data structures are very complex and would lead to very big Union ty
 
 Example ([view in explorer](https://portal.incontext-research.com/docs/explorer?query=%7B%0A++projects%28first%3A+1%29+%7B%0A++++nodes+%7B%0A++++++subjectGroups+%7B%0A++++++++nodes+%7B%0A++++++++++tasks+%7B%0A++++++++++++nodes+%7B%0A++++++++++++++...+on+ContextTask+%7B%0A++++++++++++++++data+%23+this+is+our+custom+JSON+type+that+can+contain+pretty+much+anything%0A++++++++++++++%7D%0A++++++++++++%7D%0A++++++++++%7D%0A++++++++%7D%0A++++++%7D%0A++++%7D%0A++%7D%0A%7D%0A&variables=)):
 
-```
+```graphql
 {
   projects(first: 1) {
     nodes {
@@ -245,7 +261,7 @@ Example ([view in explorer](https://portal.incontext-research.com/docs/explorer?
 
 For all those types we export fitting graphql types in our schema though, so you know which contextType requires which fields ([explorer](https://portal.incontext-research.com/docs/explorer?query=%7B%0A++__type%28name%3A+%22ContextTaskDataFacebookNewsfeedStatic%22%29+%7B%0A++++fields+%7B%0A++++++name%0A++++++description%0A++++%7D%0A++%7D%0A%7D%0A&variables=)):
 
-```
+```graphql
 {
   __type(name: "ContextTaskDataFacebookNewsfeedStatic") {
     fields {
@@ -266,10 +282,10 @@ The origin contains the route to the error in form of an array. If the entry is 
 
 An Example:
 
-```
+```json
 {
-  message: 'invalid data at subjectGroups.0.tasks.0.data.mediaSrc - invalid video url',
-  origin: ['subjectGroups', 0, 'tasks', 0, 'data', 'mediaSrc'],
+  "message": "invalid data at subjectGroups.0.tasks.0.data.mediaSrc - invalid video url",
+  "origin": ["subjectGroups", 0, "tasks", 0, "data", "mediaSrc"]
 }
 ```
 
@@ -289,22 +305,26 @@ The most important parts of the eye-square api are projects. A project is a set 
 
 Tasks can be combined in any order. For example:
 
-```
- project : {
-   id: '2018-01_ES001',
-   subjectGroups: [{
-     id: 'first group',
-     tasks: [{
-       type: 'context',
-       contextType: 'facebookNewsfeedVideoAutoplay'
-       // ...
-     }, {
-       type: 'survey'
-     }, {
-       type: 'presenter',
-       persenterType: 'tvPlayer'
-       // ...
-     }],
+```jsonc
+ "project": {
+   "id": "2018-01_ES001",
+   "subjectGroups": [{
+     "id": "first group",
+     "tasks": [
+       {
+         "type": "context",
+         "contextType": "facebookNewsfeedVideoAutoplay"
+         // ...
+       },
+       {
+         "type": "survey"
+       },
+       {
+         type: "presenter",
+         persenterType: "tvPlayer"
+         // ...
+       }
+     ],
      // ...
    }],
    // ...
@@ -376,7 +396,7 @@ _StimulusSequence_
 
 Gives back events when a video file started visibly playing.
 
-```
+```json
 "StimulusSequence": {
   "nodes": [
     {
@@ -400,7 +420,7 @@ _StimulusSequenceHost_
 
 Gives back absolute task start and end.
 
-```
+```json
 "StimulusSequenceHost": {
   "nodes": [
     {
@@ -419,7 +439,7 @@ _Interact_
 
 Gives back when the user zapped away from a video. "Value" is the video ID that was playing when the user zapped away.
 
-```
+```json
 "Interact": {
   "nodes": [
     {
@@ -440,7 +460,7 @@ _CustomEvents_
 
 Gives back events if the playback of any video was stopped for whatever reason (e.g. bad internet connection).
 
-```
+```json
 "CustomEvent": {
   "nodes": [
     {
@@ -556,11 +576,11 @@ It is possible to have dynamic values inside of the instructions html (pre instr
 
 The following would show a custom instruction before a task but none after. It would also replace `{{duration}}` with the set exposure duration.
 
-```
-instructions: {
-  pre: {
-    html: "You will now see a Facebook newsfeed. Please browse it for the next {{duration}}s as you would normally do.",
-    button: "continue"
+```json
+"instructions": {
+  "pre": {
+    "html": "You will now see a Facebook newsfeed. Please browse it for the next {{duration}}s as you would normally do.",
+    "button": "continue"
   }
 }
 ```
@@ -571,11 +591,11 @@ instructions: {
 
 ### Complex example
 
-```
+```jsonc
 // first task:
-instructions: {},
+"instructions": {},
 // second task:
-instructions: {
+"instructions": {
   "pre": {
     "html": "You will now see a Facebook newsfeed.<br/> Please browse it for the next {{duration}}s as you would normally do.",
     "button": "continue"
@@ -586,7 +606,7 @@ instructions: {
   }
 }
 // third task:
-instructions: undefined/null
+"instructions": null // null|undefined
 ```
 
 This example shows no instructions in the first, custom instructions for the second, and default instructions in the third task.
@@ -609,7 +629,7 @@ The supported Operating Systems and browsers can be overwritten using `deploymen
 
 Allow Windows (Xp and above), Linux (any version) and any browser.
 
-```
+```json
 "deploymentFilters": {
   "os": [
     {
@@ -625,7 +645,7 @@ Allow Windows (Xp and above), Linux (any version) and any browser.
 
 The above is equivalent to this:
 
-```
+```json
 "deploymentFilters": {
   "os": [
     {
@@ -642,7 +662,7 @@ The above is equivalent to this:
 
 Example with browsers:
 
-```
+```json
 "deploymentFilters": {
   "os": [
     {

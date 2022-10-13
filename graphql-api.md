@@ -72,7 +72,11 @@ When authentication of the user was successful you will recieve a user profile i
 Example request using curl
 
 ```sh
-curl -X POST -H 'Content-Type: application/json' -d '{ "email": "users@email", "password": "superSecretPassword" }' https://api.incontext-research.com/v4/auth
+curl \
+  -X POST \
+  -H 'Content-Type: application/json' \
+  -d '{ "email": "users@email", "password": "superSecretPassword" }' \
+  https://api.incontext-research.com/v4/auth
 ```
 
 Recieved response:
@@ -99,7 +103,12 @@ With the recieved token you can now make requests against our api (the explorer 
 
 Example token request ([view in explorer](https://portal.incontext-research.com/docs/explorer?query=%7B%0A++me+%7B%0A++++...+on+User+%7B%0A++++++name%0A++++%7D%0A++%7D%0A%7D%0A&variables=)):
 ```sh
-curl -X POST -H 'Content-Type: application/json' -d '{ "query": "{ me { ...on User { name } }}" }' -H 'Authorization: Bearer your.access.token' https://api.incontext-research.com/v4/graphql
+curl \
+  -X POST \
+  -H 'Content-Type: application/json' \
+  -d '{ "query": "{ me { ...on User { name } }}" }' \
+  -H 'Authorization: Bearer your.access.token' \
+  https://api.incontext-research.com/v4/graphql
 ```
 Results in:
 
@@ -133,16 +142,20 @@ To make an api secret based call, just either
 
 Example call from above:
 ```sh
-curl -X POST -H 'Content-Type: application/json' -d '{ "query": "{ me { ...on Team { name } }}" }' -H https://api.incontext-research.com/v4/graphql?apiSecret=yourSecret
+curl \
+  -X POST \
+  -H 'Content-Type: application/json' \
+  -d '{ "query": "{ me { ...on Team { name } }}" }' \
+  https://api.incontext-research.com/v4/graphql?apiSecret=yourSecret
 ```
 
 Results in:
 
-```json
+```jsonc
 {
   "data": {
     "me": {
-      "name": "default" # this is now your teams name
+      "name": "default" // this is now your teams name
     }
   }
 }
@@ -269,10 +282,10 @@ The origin contains the route to the error in form of an array. If the entry is 
 
 An Example:
 
-```javascript
+```json
 {
-  message: 'invalid data at subjectGroups.0.tasks.0.data.mediaSrc - invalid video url',
-  origin: ['subjectGroups', 0, 'tasks', 0, 'data', 'mediaSrc'],
+  "message": "invalid data at subjectGroups.0.tasks.0.data.mediaSrc - invalid video url",
+  "origin": ["subjectGroups", 0, "tasks", 0, "data", "mediaSrc"]
 }
 ```
 
@@ -560,10 +573,10 @@ It is possible to have dynamic values inside of the instructions html (pre instr
 The following would show a custom instruction before a task but none after. It would also replace `{{duration}}` with the set exposure duration.
 
 ```json
-instructions: {
-  pre: {
-    html: "You will now see a Facebook newsfeed. Please browse it for the next {{duration}}s as you would normally do.",
-    button: "continue"
+"instructions": {
+  "pre": {
+    "html": "You will now see a Facebook newsfeed. Please browse it for the next {{duration}}s as you would normally do.",
+    "button": "continue"
   }
 }
 ```
@@ -574,11 +587,11 @@ instructions: {
 
 ### Complex example
 
-```json
+```jsonc
 // first task:
-instructions: {},
+"instructions": {},
 // second task:
-instructions: {
+"instructions": {
   "pre": {
     "html": "You will now see a Facebook newsfeed.<br/> Please browse it for the next {{duration}}s as you would normally do.",
     "button": "continue"
@@ -589,7 +602,7 @@ instructions: {
   }
 }
 // third task:
-instructions: undefined|null
+"instructions": null // null|undefined
 ```
 
 This example shows no instructions in the first, custom instructions for the second, and default instructions in the third task.

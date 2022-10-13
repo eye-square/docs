@@ -11,7 +11,7 @@ Two types of hook can be set using:
 This is a sample application that loads an external sdk and calls its methods. For brevity, we assume two functions `createScript` and `waitFor` that load a script and wait until a condition is fulfilled:
 
 ```javascript
-window.setInitHook(() => { 
+window.setInitHook(async () => { 
   // load our bundle
   await createScript('https://extern.integration.com');
   // our script creates an SDK object globally, wait for it

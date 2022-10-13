@@ -28,10 +28,9 @@ window.setTaskHook('completion', () => window.SDK.stopRecording());
 
 ## jobs
 
-A job is essentially just a function that receives a single argument: 
+A job is just a function that receives a single argument: 
 ```javascript
-window.setTaskHook('recording', ({ context, channel, state }) => {
-});
+window.setTaskHook('recording', ({ context, channel, state }) => { });
 ```
 
 The argument consists of the following fields
@@ -58,20 +57,25 @@ The argument consists of the following fields
   }));
 
   window.setTaskHook("completion", ({ state }) => {
-    console.log('task count:', state.taskCount)
+    console.log('tasks completed:', state.taskCount)
   });
   ```
   In a two task setup, the script above should print:
   ```log
-  task count: 1
-  task count: 2
+  tasks completed: 1
+  tasks completed: 2
   ```
 
 - `render` is a utility function for rendering custom content. It's meant as a way to help hide and manage the rendered content after each stage
   ```javascript
-  window.setTaskHook("preparation", ({ render }) => ({
-    const warningDiv = document.createElement('div');
+  window.setTaskHook('preparation', ({ render }) =>
+    new Promise((resolve) => {
+      const warningDiv = document.createElement('div');
+      warningDiv.innerText = 'hey, watch out!';
 
-    render(div);
-  }));
+      // the div will be automatically shown and hidden after 2 seconds
+      render(div);
+      setTimeout(resolve, 2000);
+    })
+  );
   ```

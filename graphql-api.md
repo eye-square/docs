@@ -269,7 +269,7 @@ The origin contains the route to the error in form of an array. If the entry is 
 
 An Example:
 
-```json
+```javascript
 {
   message: 'invalid data at subjectGroups.0.tasks.0.data.mediaSrc - invalid video url',
   origin: ['subjectGroups', 0, 'tasks', 0, 'data', 'mediaSrc'],

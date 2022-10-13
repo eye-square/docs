@@ -305,22 +305,26 @@ The most important parts of the eye-square api are projects. A project is a set 
 
 Tasks can be combined in any order. For example:
 
-```graphql
- project : {
-   id: '2018-01_ES001',
-   subjectGroups: [{
-     id: 'first group',
-     tasks: [{
-       type: 'context',
-       contextType: 'facebookNewsfeedVideoAutoplay'
-       // ...
-     }, {
-       type: 'survey'
-     }, {
-       type: 'presenter',
-       persenterType: 'tvPlayer'
-       // ...
-     }],
+```jsonc
+ "project": {
+   "id": "2018-01_ES001",
+   "subjectGroups": [{
+     "id": "first group",
+     "tasks": [
+       {
+         "type": "context",
+         "contextType": "facebookNewsfeedVideoAutoplay"
+         // ...
+       },
+       {
+         "type": "survey"
+       },
+       {
+         type: "presenter",
+         persenterType: "tvPlayer"
+         // ...
+       }
+     ],
      // ...
    }],
    // ...

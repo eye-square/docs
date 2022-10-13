@@ -5,7 +5,7 @@ hooks are a means to attach jobs at specific moments of a task's lifecycle.
 The jobs run on the same context as the displayed content, typically that would be the top frame. They are also blocking: if a promise is returned, the internal job runner will wait for it to resolve before advancing to he next task stage.
 
 Two types of hook can be set using:
-* `setInitHook(fn)`: job will run only once, the first time the script is used, before the task begin.
+* `setInitHook(fn)`: job will run only once, the first time the script is used, before the task begins.
 * `setTaskHook(stage, fn)`: job runs on each task.
 
 This is a sample application that loads an external sdk and calls its methods. For brevity, we assume two functions `createScript` and `waitFor` that load a script and wait until a condition is fulfilled:

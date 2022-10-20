@@ -110,7 +110,7 @@ An event object will have the following structure:
 		path: ['newsfeed', 'post', 0, 'video'], 
 		elementId: null|'value',
 		tracked: true
-	}
+	},
 	// event data/body
 	payload: { }
 }

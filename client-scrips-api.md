@@ -8,14 +8,14 @@ Two types of hook can be set using:
 * `setInitHook(fn)`: job will run only once, the first time the script is used, before the task begins.
 * `setTaskHook(stage, fn)`: job runs on each task.
 
-This is a sample application that loads an external sdk and calls its methods. For brevity, we assume two functions `createScript` and `waitFor` that load a script and wait until a condition is fulfilled:
+This is a sample application that loads an external sdk and calls its methods:
 
 ```javascript
-window.setInitHook(async () => { 
+window.setInitHook(async ({ utils }) => { 
   // load our bundle
-  await createScript('https://extern.integration.com');
+  await utils.createScript('https://extern.integration.com');
   // our script creates an SDK object globally, wait for it
-  await waitFor(() => window.SDK);
+  await utils.waitFor(() => window.SDK);
 });
 
 window.setTaskHook('preparation', () => window.SDK.prepareUser());
@@ -47,6 +47,7 @@ The argument consists of the following fields
     };
   });
   ```
+  For more info on the events received, see the [event objects section](#event-objects).
 
 - `state` is used to share state between jobs. All jobs can return an object that will be merged with the current state and available for all subsequent jobs. Scripts are free to use the global namespace, but we recommend using the `state` object to avoid conflicts and keep things tidy.
   ```javascript
@@ -79,3 +80,40 @@ The argument consists of the following fields
     })
   );
   ```
+
+- `utils` commonly used utility functions. Currently `sleep`, `waitFor` and `createScript`:
+  ```javascript
+  window.setTaskHook('preparation', async ({ utils }) =>
+    const { sleep, createScript, waitFor } = utils;
+    // wait half a second
+    await sleep(500);
+    // create a script tag from a source url
+    await createScript('https://externa.com/sdk.js');
+    // wait for a condition to evaluate truthy. 
+    // accepts two more optional arguments: interval(ms) and timeout(ms)
+    await waitFor(() => window.SDK, 500, 5000); 
+  );
+  ```
+
+# event objects
+
+An event object will have the following structure:
+
+```javascript
+{
+	// type of the event
+	type: 'mediaPause',
+	// UTC timestamp of the moment when the event occurred
+	timestamp: 1666266197290,
+	// event source information
+	origin: {
+		path: ['newsfeed', 'post', 0, 'video'], 
+		elementId: null|'value',
+		tracked: true
+	}
+	// event data/body
+	payload: { }
+}
+```
+The `origin.path` property of an event refers to the abstract hierarchy of the context, not a location within the dom tree. The fields in `payload` are variable and might change from event to event.
+

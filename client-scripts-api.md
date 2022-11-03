@@ -40,11 +40,12 @@ The argument consists of the following fields
 - `channel` is used to send and receive messages using an interface similar to a [broadcast channel](https://developer.mozilla.org/en-US/docs/Web/API/Broadcast_Channel_API):
   ```javascript
   window.setTaskHook("recording", ({ channel }) => {
-    channel.onmessage = (event) => {
-      if (event.type === 'video-pause') {
+    // Add event listener
+    channel.on((event) => {
+      if (event.type === 'mediaPause') {
         // react to the target video being paused
       }
-    };
+    });
   });
   ```
   For more info on the events received, see the [event objects section](#event-objects).
@@ -108,7 +109,7 @@ An event object will have the following structure:
 	// event source information
 	origin: {
 		path: ['newsfeed', 'post', 0, 'video'], 
-		elementId: null|'value',
+		trackingId: 'value', // optional 
 		tracked: true
 	},
 	// event data/body

@@ -5,4 +5,4 @@
 # in-context documentation
 
 - [GraphQL api](./graphql-api.md)
-- [Client side scripts api](./client-scrips-api.md)
+- [Client side scripts api](./client-scripts-api.md)

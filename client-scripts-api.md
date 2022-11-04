@@ -164,7 +164,7 @@ The tracking ID is a unique identifier for an entry that is tracked. This can be
 or a story on instagram that a study wants to test on. It's the same for all events of sub elements
 of this entry (a video of a tracked post has the same id as the like button for example).
 
-## Events
+## Event list
 
 This is a list of all currently supported events (more are coming later):
 

@@ -28,7 +28,8 @@ window.setTaskHook('completion', () => window.SDK.stopRecording());
 
 ## jobs
 
-A job is just a function that receives a single argument: 
+A job is just a function that receives a single argument:
+
 ```javascript
 window.setTaskHook('recording', ({ context, channel, state }) => { });
 ```
@@ -115,8 +116,8 @@ An event object will have the following structure:
   payload: { }
 }
 ```
-The `origin.path` property of an event refers to the abstract hierarchy of the context, not a location within the dom tree. The fields in `payload` are variable and might change from event to event.
 
+The `origin.path` property of an event refers to the abstract hierarchy of the context, not a location within the dom tree. The fields in `payload` are variable and might change from event to event.
 
 ## Filtering events
 

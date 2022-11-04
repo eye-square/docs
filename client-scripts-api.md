@@ -123,7 +123,7 @@ The `origin.path` property of an event refers to the abstract hierarchy of the c
 As the channel is handling a lot of different events you most of the time need to filter the events to
 react to only the events that you need to. There are multiple properties that are of interest for you.
 
-For now you can filter by using an `if` clause (as seen in an example above already):
+For now you can filter by using an `if` clause:
 
 ```js
 window.setTaskHook("recording", ({ channel }) => {
@@ -206,7 +206,7 @@ Payload:
 
 ### `visibilityChange`
 
-An element changes visibility ratio between 0 (not visible at all) and 1 (fully visible). The ratio 
+An element changes visibility ratio between 0 (not visible at all) and 1 (fully visible). The ratio
 is rounded to the next tenth part (`0.0636` is rounded to `0.1`).
 
 Payload

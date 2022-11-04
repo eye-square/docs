@@ -42,7 +42,7 @@ The argument consists of the following fields
   window.setTaskHook("recording", ({ channel }) => {
     // Add event listener
     channel.on((event) => {
-      if (event.type === 'mediaPause') {
+      if (event.origin.tracked && event.type === 'mediaPause') {
         // react to the target video being paused
       }
     });

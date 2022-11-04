@@ -206,14 +206,20 @@ Payload:
 
 ### `visibilityChange`
 
-An element changes visibility ratio between 0 (not visible at all) and 1 (fully visible). The ratio
-is rounded to the next tenth part (`0.0636` is rounded to `0.1`).
+An element changes visibility ratio between 0 (not visible at all) and 1 (fully visible).
 
-Payload
+Payload:
 
 ```js
 {
-  visibilityRatio: 0.5, // Ratio of how much the element is visible/in the viewport
-  inView: true, // Is true when the visibility ratio is equal or above 0.5 and false otherwise
+  visibilityRatio: 0.545, // Ratio of how much the element is visible/in the viewport
+  visibleRect: {
+    x: 100, // X position in the viewport
+    y: 200, // Y position in the viewport
+    width: 340, // Width of the visible part of the element in pixel
+    height: 340, // Height of the visible part of the element in pixel
+  }
 }
 ```
+
+If the element is not visible, the value of `visibleRect` is `null`.

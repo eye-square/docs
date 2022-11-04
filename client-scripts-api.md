@@ -101,18 +101,18 @@ An event object will have the following structure:
 
 ```javascript
 {
-	// type of the event
-	type: 'mediaPause',
-	// UTC timestamp of the moment when the event occurred
-	timestamp: 1666266197290,
-	// event source information
-	origin: {
-		path: ['newsfeed', 'post', 0, 'video'], 
-		trackingId: 'value', // optional 
-		tracked: true
-	},
-	// event data/body
-	payload: { }
+  // type of the event
+  type: 'mediaPause',
+  // UTC timestamp of the moment when the event occurred
+  timestamp: 1666266197290,
+  // event source information
+  origin: {
+    path: ['newsfeed', 'post', 0, 'video'], 
+    trackingId: 'value', // optional 
+    tracked: true
+  },
+  // event data/body
+  payload: { }
 }
 ```
 The `origin.path` property of an event refers to the abstract hierarchy of the context, not a location within the dom tree. The fields in `payload` are variable and might change from event to event.
@@ -127,10 +127,11 @@ For now you can filter by using an `if` clause:
 
 ```js
 window.setTaskHook("recording", ({ channel }) => {
-channel.on((event) => {
-      if (event.origin.tracked && event.type === 'mediaPause') {
-        // react to the target video being paused
-      }
+  channel.on((event) => {
+    if (event.origin.tracked && event.type === 'mediaPause') {
+      // react to the target video being paused
+    }
+  });
 });
 ```
 

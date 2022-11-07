@@ -110,6 +110,7 @@ An event object will have the following structure:
   origin: {
     path: ['newsfeed', 'post', 0, 'video'], 
     trackingId: 'value', // optional 
+    domElement: videoDomElement, // optional (in case there is a DOM element related to the event)
     tracked: true
   },
   // event data/body
@@ -118,6 +119,9 @@ An event object will have the following structure:
 ```
 
 The `origin.path` property of an event refers to the abstract hierarchy of the context, not a location within the dom tree. The fields in `payload` are variable and might change from event to event.
+
+The `origin.domElement` property should be used only when you can't get the needed information from the event itself.
+In case you you think there is information that should be added to the event, please contact us.
 
 ## Filtering events
 
@@ -179,6 +183,7 @@ Payload:
 ```js
 {
   muted: true, // defines if the media was muted at the time it was started
+  currentTime: 12.34, // current time of the media in seconds the moment the event happened
 }
 ```
 
@@ -191,6 +196,7 @@ Payload:
 ```js
 {
   muted: true, // defines if the media was muted at the time it was started
+  currentTime: 12.34, // current time of the media in seconds the moment the event happened
 }
 ```
 
@@ -203,6 +209,7 @@ Payload:
 ```js
 {
   muted: true, // defines if the media was muted at the time it was started
+  currentTime: 12.34, // current time of the media in seconds the moment the event happened
 }
 ```
 

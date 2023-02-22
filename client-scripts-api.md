@@ -232,3 +232,15 @@ Payload:
 ```
 
 If the element is not visible, the value of `visibleRect` is `null`.
+
+### `toggle`
+
+This event is used to express changes in boolean values.
+
+Payload:
+
+```js
+{
+  value: true|false
+}
+```

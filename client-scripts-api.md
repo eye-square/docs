@@ -178,33 +178,21 @@ This is a list of all currently supported events (more are coming later):
 
 Play/start of a video or audio.
 
-Payload:
-
-```js
-{
-  muted: true, // defines if the media was muted at the time it was started
-  currentTime: 12.34, // current time of the media in seconds the moment the event happened
-}
-```
-
 ### `mediaPause`
 
 Mid playtime pause of a video or audio (excluding the video ending).
-
-Payload:
-
-```js
-{
-  muted: true, // defines if the media was muted at the time it was started
-  currentTime: 12.34, // current time of the media in seconds the moment the event happened
-}
-```
 
 ### `mediaEnded`
 
 Video or audio has ended (`currentTime` === `duration`).
 
-Payload:
+### `mediaTimeUpdate`
+
+Fires when the media's `currentTime` attribute is updated.
+
+#### media events payload
+
+The payload for all media the events above is the following:
 
 ```js
 {

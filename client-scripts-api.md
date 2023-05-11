@@ -84,16 +84,30 @@ The argument consists of the following fields
 
 - `utils` commonly used utility functions. Currently `sleep`, `waitFor` and `createScript`:
   ```javascript
-  window.setTaskHook('preparation', async ({ utils }) =>
-    const { sleep, createScript, waitFor } = utils;
+  window.setTaskHook('preparation', async ({ utils }) => {
     // wait half a second
-    await sleep(500);
+    await utils.sleep(500);
+
     // create a script tag from a source url
-    await createScript('https://externa.com/sdk.js');
+    await utils.createScript('https://externa.com/sdk.js');
+
+    // create a style tag from a style string
+    utils.injectStyles(`
+      #test-id {
+        border: 1px solid red;
+      }
+    `);
+
     // wait for a condition to evaluate truthy. 
     // accepts two more optional arguments: interval(ms) and timeout(ms)
-    await waitFor(() => window.SDK, 500, 5000); 
-  );
+    await utils.waitFor(() => window.SDK, 500, 5000); 
+
+    // wait for an element using css selectors
+    const element = await utils.waitForElement('#test-id'); 
+
+    // wait for an multiple elements using css selectors
+    const elements = await utils.waitForElements('a#selected'); 
+  });
   ```
 
 # event objects
@@ -174,14 +188,48 @@ of this entry (a video of a tracked post has the same id as the like button for 
 
 This is a list of all currently supported events (more are coming later):
 
+### `taskStart` / `taskEnd`
+
+Global events triggered at the beginning and right before the end of each task.
+
+Payload:
+
+```js
+{ }
+```
+
 ### `mediaStart`
 
 Play/start of a video or audio.
 
+<<<<<<< HEAD
+=======
+Payload:
+
+```js
+{
+  muted: true, // mute state of the media at start time
+  currentTime: 12.34, // current time of the media in seconds the moment the event happened
+}
+```
+
+>>>>>>> 35ac666 (utils function update)
 ### `mediaPause`
 
 Mid playtime pause of a video or audio (excluding the video ending).
 
+<<<<<<< HEAD
+=======
+Payload:
+
+```js
+{
+  muted: true, // mute state of the media at start time
+  currentTime: 12.34, // current time of the media in seconds the moment the event happened
+}
+```
+
+>>>>>>> 35ac666 (utils function update)
 ### `mediaEnded`
 
 Video or audio has ended (`currentTime` === `duration`).
@@ -196,7 +244,7 @@ The payload for all media the events above is the following:
 
 ```js
 {
-  muted: true, // defines if the media was muted at the time it was started
+  muted: true, // mute state of the media at start time
   currentTime: 12.34, // current time of the media in seconds the moment the event happened
 }
 ```

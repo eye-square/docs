@@ -202,8 +202,6 @@ Payload:
 
 Play/start of a video or audio.
 
-<<<<<<< HEAD
-=======
 Payload:
 
 ```js
@@ -213,14 +211,11 @@ Payload:
 }
 ```
 
->>>>>>> 35ac666 (utils function update)
 ### `mediaPause`
 
 Mid playtime pause of a video or audio (excluding the video ending).
 
-<<<<<<< HEAD
-=======
-Payload:
+Payload: same as `mediaStart` (same for all media events)
 
 ```js
 {
@@ -229,18 +224,20 @@ Payload:
 }
 ```
 
->>>>>>> 35ac666 (utils function update)
 ### `mediaEnded`
 
 Video or audio has ended (`currentTime` === `duration`).
 
+```js
+{
+  muted: true, // mute state of the media at start time
+  currentTime: 12.34, // current time of the media in seconds the moment the event happened
+}
+```
+
 ### `mediaTimeUpdate`
 
 Fires when the media's `currentTime` attribute is updated.
-
-#### media events payload
-
-The payload for all media the events above is the following:
 
 ```js
 {

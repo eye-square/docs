@@ -277,3 +277,107 @@ Payload:
   value: true|false
 }
 ```
+
+### `routeChange`
+
+This event is triggered when a change in the internal router has happened.
+
+Payload:
+
+```js
+{
+  from: {
+    pathname: '/home',
+    search: '', 
+  }
+  to: {
+    pathname: '/products',
+    search: '?page=0',
+    query: {
+      page: 0,
+    }
+  },
+  action: 'PUSH',
+}
+```
+
+### E-Commerce specific events
+
+#### `ecomCheckout`
+
+Subject checks out and ends their shopping journey. Includes the products that were in the basket in 
+the time of the checkout.
+
+Payload:
+
+```js
+{
+  basket: [{
+    id: '1234', // Product ID
+    price: 1.99,
+    quantity: 6,
+    sources: ['results-page', 'details-page', 'details-page-related'], // Where the products were added from
+    time: 12345, // Time in ms after session start of the first addition
+  }],
+  total: 11.94,
+  totalDiscounted: 11.43,
+  discountApplied: true,
+}
+```
+
+#### `ecomBasketQuantityChange`
+
+Subject changes the quantity of a product, either by adding it to the basket for the first time, 
+removing it from the basket or changing the quantity explicitly.
+
+Payload:
+
+```js
+{
+  id: '1234', // Product ID
+  from: 0,
+  to: 1,
+  difference: 1,
+  productTotal: 4.99,
+  basketTotal: 23.52,
+  source: 'checkout', // Where the quantity was changed at
+}
+```
+
+#### `ecomSearchTermChange`
+
+Subject changed and applied a new search term. Includes also the result count for the new search.
+
+Payload:
+
+```js
+{
+  from: '',
+  to: 'chocolate',
+  resultCount: 145,
+}
+```
+
+#### `ecomResultsFilterChange`
+
+Subject changed the filters for results and applied the filters.
+
+```js
+{
+  from: {
+    activeFilters: {
+      brandName: ['snickers', 'milka'],
+      priceRange: ['0-5'],
+    }
+    activeFilterCount: 3,
+    resultCount: 24,
+  },
+  to: {
+    activeFilters: {
+      brandName: ['snickers', 'milka', 'lindt', 'm&ms'],
+    }
+    activeFilterCount: 4,
+    resultCount: 46,
+  }
+}
+```

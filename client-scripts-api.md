@@ -280,22 +280,19 @@ Payload:
 
 ### `routeChange`
 
-This event is triggered when a change in the internal router has happened.
+This event is triggered when a change in the internal router happens.
 
 Payload:
 
 ```js
 {
-  from: {
-    pathname: '/home',
-    search: '', 
-  }
-  to: {
+  location: {
     pathname: '/products',
     search: '?page=0',
     query: {
       page: 0,
-    }
+    },
+    hash: '#',
   },
   action: 'PUSH',
 }
@@ -335,9 +332,8 @@ Payload:
 ```js
 {
   id: '1234', // Product ID
-  from: 0,
-  to: 1,
-  difference: 1,
+  quantity: 1,
+  quantityDelta: 1,
   productTotal: 4.99,
   basketTotal: 23.52,
   source: 'checkout', // Where the quantity was changed at
@@ -352,8 +348,7 @@ Payload:
 
 ```js
 {
-  from: '',
-  to: 'chocolate',
+  searchTerm: 'chocolate',
   resultCount: 145,
 }
 ```
@@ -364,20 +359,10 @@ Subject changed the filters for results and applied the filters.
 
 ```js
 {
-  from: {
-    activeFilters: {
-      brandName: ['snickers', 'milka'],
-      priceRange: ['0-5'],
-    }
-    activeFilterCount: 3,
-    resultCount: 24,
-  },
-  to: {
-    activeFilters: {
-      brandName: ['snickers', 'milka', 'lindt', 'm&ms'],
-    }
-    activeFilterCount: 4,
-    resultCount: 46,
+  activeFilters: {
+    brandName: ['snickers', 'milka', 'lindt', 'm&ms'],
   }
+  activeFilterCount: 4,
+  resultCount: 46,
 }
 ```

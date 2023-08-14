@@ -309,7 +309,7 @@ Payload:
 
 ```js
 {
-  basket: [{
+  basketContents: [{
     id: '1234', // Product ID
     price: 1.99,
     quantity: 6,
@@ -355,7 +355,9 @@ Payload:
 
 #### `ecomResultsFilterChange`
 
-Subject changed the filters for results and applied the filters.
+Subject changed the filters for results and applied the filters or initial empty filter has been applied.
+
+Payload:
 
 ```js
 {
@@ -364,5 +366,20 @@ Subject changed the filters for results and applied the filters.
   }
   activeFilterCount: 4,
   resultCount: 46,
+}
+```
+
+#### `ecomResultsPageChange`
+
+Results page has been changed or initialized.
+
+Payload:
+
+```js
+{
+  hasNextPage: true
+  hasPrevPage: true
+  page: 6
+  totalPageCount: 59
 }
 ```

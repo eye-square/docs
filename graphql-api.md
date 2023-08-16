@@ -508,40 +508,62 @@ The following parameters will be sent back to the survey to be used for filterin
 
 # Success evaluation
 
-The success of a task can be defined and evaluated on a per project basis. Based on those definitions we analyze the validity of collected metrics. Different evaluation rules are applied by default based on the ad formats and the task sequence. These evaluation rules can be customized for each task.
+The success of a task can be defined and evaluated on a per project basis. Based on those definitions we analyze the validity of collected metrics. Different evaluation rules are applied by default based on the ad formats and if a task has user guidance enabled or not. These evaluation rules can be customized for each task.
 
-If no metrics are recorded (like in a tv player task) we don't evaluate success and return always 1.
+If no metrics are recorded we don't evaluate success and return always 1.
 
 ## Context tasks defaults
 
 In the table below you see the defaults used:
 
-| Type                          | userGuidance | context                              | task sequence                   | task 1         | task 2             |
-| ----------------------------- | ------------ | ------------------------------------ | ------------------------------- | -------------- | ------------------ |
-| static/video/carousel/stories | true/false   | Facebook, Instagram, Twitter, TikTok | task                            | "visible": 1 | -                  |
-| static                        | true         | Facebook, Instagram, Twitter         | task-task / task-survey-task    | -              | "visible":10000    |
-| static                        | false        | Facebook, Instagram, Twitter         | task-task / task-survey-task    | -              | "visible":1000     |
-| video                         | true         | Facebook, Instagram, Twitter, TikTok | task-task / task-survey-task    | -              | "percentPlayed":90 |
-| video                         | false        | Facebook, Instagram, Twitter, TikTok | task-task / task-survey-task    | -              | "played":500       |
-| carousel                      | true         | Facebook, Instagram                  | task-task / task-survey-task    | -              | "visible": 1     |
-| carousel                      | false        | Facebook, Instagram                  | task-task / task-survey-task    | -              | "visible": 1     |
-| stories                       | true         | Facebook, Instagram                  | task-task / task-survey-task    | -              | "visible": 1     |
-| stories                       | false        | Facebook, Instagram                  | task-task / task-survey-task    | -              | "visible": 1     |
-| preroll video                 | true         | YouTube, Twitch                      | task                            | "played":5000  | -                  |
-| preroll video                 | false        | YouTube, Twitch                      | task                            | "played":500   | -                  |
-| preroll video                 | true         | YouTube, Twitch                      | task-task / task-survey-task    | -              | "played":5000      |
-| preroll video                 | false        | YouTube, Twitch                      | task-task / task-survey-task    | -              | "played":500       |
-| preroll video                 | true         | Youku                                | task                            | "played":1     | -                  |
-| preroll video                 | false        | Youku                                | task                            | "played":1     | -                  |
-| preroll video                 | true         | Youku                                | task-task / task-survey-task    | -              | "played":1         |
-| preroll video                 | false        | Youku                                | task-task / task-survey-task    | -              | "played":1         |
-| frequency                     | true         | YouTube                              | task                            | "played":5000  | -                  |
-| frequency                     | false        | YouTube                              | task                            | "played":500   | -                  |
-| frequency                     | true         | YouTube                              | task-task / task-survey-task    | -              | "played":5000      |
-| frequency                     | false        | YouTube                              | task-task / task-survey-task    | -              | "played":500       |
-| multiple                      | false        | Facebook, Instagram                  | task                            | "loaded": true | -                  |
-| multiple                      | false        | Facebook, Instagram                  | task-task/task-survey-task      | -              | "loaded": true     |
-| control                       | false        | All Contexts                         | task/task-task/task-survey-task | -              | -                  |
+|Context Type|Guided Tasks|Non Guided Tasks|
+|----------|----------|----------|
+|facebook-multiple|{"loaded":true}|{"loaded":true}|
+|facebook-newsfeed-static|{"visible":1}|{"visible":1}|
+|facebook-newsfeed-video-autoplay|{"percentPlayed":90}|{"visible":1}|
+|facebook-newsfeed-carousel|{"elements":[{"id":"carousel-container","visible":1}]}|{"elements":[{"id":"carousel-container","visible":1}]}|
+|facebook-newsfeed-midroll|{"elements":[{"id":"post-*-midroll-*-item-0","percentPlayed":90}]}|{"elements":[{"id":"post-*","visible":1}]}|
+|facebook-newsfeed-content-video|{"percentPlayed":90}|{"visible":1}|
+|facebook-stories-static|{"elements":[{"id":"story-0","visible":1}]}|{"elements":[{"id":"story-0","visible":1}]}|
+|facebook-stories-video|{"elements":[{"id":"story-0","visible":1}]}|{"elements":[{"id":"story-0","visible":1}]}|
+|facebook-stories-carousel|{"elements":[{"id":"story-0","visible":1}]}|{"elements":[{"id":"story-0","visible":1}]}|
+|facebook-stories-content|{"elements":[{"id":"story-0","visible":1}]}|{"elements":[{"id":"story-0","visible":1}]}|
+|instagram-multiple|{"loaded":true}|{"loaded":true}|
+|instagram-newsfeed-static|{"visible":1}|{"visible":1}|
+|instagram-newsfeed-video-autoplay|{"percentPlayed":90}|{"visible":1}|
+|instagram-newsfeed-carousel|{"elements":[{"id":"carousel-container","visible":1}]}|{"elements":[{"id":"carousel-container","visible":1}]}|
+|instagram-reels-infeed-video|{"percentPlayed":90}|{"visible":1}|
+|instagram-stories-static|{"elements":[{"id":"story-0","visible":1}]}|{"elements":[{"id":"story-0","visible":1}]}|
+|instagram-stories-video|{"elements":[{"id":"story-0","visible":1}]}|{"elements":[{"id":"story-0","visible":1}]}|
+|instagram-stories-carousel|{"elements":[{"id":"story-0","visible":1}]}|{"elements":[{"id":"story-0","visible":1}]}|
+|instagram-stories-content|{"elements":[{"id":"story-0","visible":1}]}|{"elements":[{"id":"story-0","visible":1}]}|
+|snapchat-static|{"elements":[{"id":"story-0","visible":1}]}|{"elements":[{"id":"story-0","visible":1}]}|
+|snapchat-video|{"elements":[{"id":"story-0","visible":1}]}|{"elements":[{"id":"story-0","visible":1}]}|
+|snapchat-carousel|{"elements":[{"id":"story-0","visible":1}]}|{"elements":[{"id":"story-0","visible":1}]}|
+|snapchat-inline-static|{"visible":1}|{"visible":1}|
+|snapchat-inline-video|{"visible":1}|{"visible":1}|
+|tiktok-multiple|{"loaded":true}|{"loaded":true}|
+|tiktok-brand-takeover-static|{"elements":[{"id":"tiktok-post","visible":1}]}|{"elements":[{"id":"tiktok-post","visible":1}]}|
+|tiktok-brand-takeover-video|{"elements":[{"id":"tiktok-post","percentPlayed":90}]}|{"elements":[{"id":"tiktok-post","visible":1}]}|
+|tiktok-infeed-video|{"elements":[{"id":"tiktok-post","percentPlayed":90}]}|{"elements":[{"id":"tiktok-post","visible":1}]}|
+|tiktok-topview-video|{"elements":[{"id":"tiktok-post","percentPlayed":90}]}|{"elements":[{"id":"tiktok-post","visible":1}]}|
+|twitch-preroll|{"played":5000}|{"visible":1}|
+|twitch-midroll|{"played":5000}|{"visible":1}|
+|twitter-newsfeed-static|{"visible":1}|{"visible":1}|
+|twitter-newsfeed-video-autoplay|{"percentPlayed":90}|{"visible":1}|
+|websites-homepage-static|{"visible":1}|{"visible":1}|
+|websites-homepage-video|{"visible":1}|{"visible":1}|
+|websites-multiple|{"loaded":true}|{"loaded":true}|
+|youku-preroll|{"visible":1}|{"visible":1}|
+|youtube-discovery|{"loaded":true}|{"loaded":true}|
+|youtube-content|{"loaded":true}|{"loaded":true}|
+|youtube-frequency|{"played":5000}|{"visible":1}|
+|youtube-pods|{"played":5000}|{"visible":1}|
+|youtube-preroll|{"played":5000}|{"visible":1}|
+|youtube-masthead|{"elements":[{"id":"youtube-content-video","played":5000}]}|{"elements":[{"id":"mastheadAd-0","visible":1}]}|
+|youtube-multiple|{"loaded":true}|{"loaded":true}|
+|youtube-shorts-infeed|{"percentPlayed":90}|{"visible":1}|
+|youtube-shorts-content|{"percentPlayed":90}|{"visible":1}|
 
 # Instructions
 

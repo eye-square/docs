@@ -298,6 +298,52 @@ Payload:
 }
 ```
 
+### `searchTermChange`
+
+Subject changed and applied a new search term. Includes also the result count for the new search.
+
+Payload:
+
+```js
+{
+  searchTerm: 'chocolate',
+  resultCount: 145,
+}
+```
+
+The property `resultCount` is optional and could be omitted if result count is not known or not available.
+
+### `resultsFilterChange`
+
+Subject changed the filters for results and applied the filters or initial empty filter has been applied.
+
+Payload:
+
+```js
+{
+  activeFilters: {
+    brandName: ['snickers', 'milka', 'lindt', 'm&ms'],
+  }
+  activeFilterCount: 4,
+  resultCount: 46, // Results after filter has been applied
+}
+```
+
+### `paginationChange`
+
+Results page has been changed or initialized. Origin of event tells where the pagination has changed.
+
+Payload:
+
+```js
+{
+  hasNextPage: true
+  hasPrevPage: true
+  page: 6
+  totalPageCount: 59
+}
+```
+
 ### E-Commerce specific events
 
 #### `ecomCheckout`
@@ -337,49 +383,5 @@ Payload:
   productTotal: 4.99,
   basketTotal: 23.52,
   source: 'checkout', // Where the quantity was changed at
-}
-```
-
-#### `ecomSearchTermChange`
-
-Subject changed and applied a new search term. Includes also the result count for the new search.
-
-Payload:
-
-```js
-{
-  searchTerm: 'chocolate',
-  resultCount: 145,
-}
-```
-
-#### `ecomResultsFilterChange`
-
-Subject changed the filters for results and applied the filters or initial empty filter has been applied.
-
-Payload:
-
-```js
-{
-  activeFilters: {
-    brandName: ['snickers', 'milka', 'lindt', 'm&ms'],
-  }
-  activeFilterCount: 4,
-  resultCount: 46,
-}
-```
-
-#### `ecomResultsPageChange`
-
-Results page has been changed or initialized.
-
-Payload:
-
-```js
-{
-  hasNextPage: true
-  hasPrevPage: true
-  page: 6
-  totalPageCount: 59
 }
 ```

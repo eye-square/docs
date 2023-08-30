@@ -82,14 +82,24 @@ The argument consists of the following fields
   );
   ```
 
-- `utils` commonly used utility functions. Currently `sleep`, `waitFor` and `createScript`:
+- `utils` commonly used utility functions.
+
   ```javascript
+  /*
+    - sleep
+    - waitFor, waitForElement, waitForElements
+    - createScript, createStyles, injectStyles
+    - showMessage
+  */
   window.setTaskHook('preparation', async ({ utils }) => {
     // wait half a second
     await utils.sleep(500);
 
     // create a script tag from a source url
-    await utils.createScript('https://externa.com/sdk.js');
+    await utils.createScript('https://external.com/sdk.js');
+
+    // create a style tag from a source url
+    await utils.createStyles('https://external.com/styles.css');
 
     // create a style tag from a style string
     utils.injectStyles(`
@@ -98,15 +108,17 @@ The argument consists of the following fields
       }
     `);
 
-    // wait for a condition to evaluate truthy. 
-    // accepts two more optional arguments: interval(ms) and timeout(ms)
-    await utils.waitFor(() => window.SDK, 500, 5000); 
+    // wait for a condition to evaluate truthy. optional arguments: interval(ms), timeout(ms)
+    await utils.waitFor(() => window.SDK /*, 500, 5000 */);
 
     // wait for an element using css selectors
-    const element = await utils.waitForElement('#test-id'); 
+    const element = await utils.waitForElement('#test-id');
 
-    // wait for an multiple elements using css selectors
-    const elements = await utils.waitForElements('a#selected'); 
+    // wait for multiple elements using css selectors
+    const elements = await utils.waitForElements('a#selected');
+
+    // Display a centered message and wait for the button to be clicked
+    await utils.showMessage({ message: `Ok, let's start.<br><br>Press continue!` button: 'Continue' });
   });
   ```
 

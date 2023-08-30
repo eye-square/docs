@@ -115,7 +115,7 @@ The argument consists of the following fields
     const element = await utils.waitForElement('#test-id');
 
     // wait for multiple elements using css selectors
-    const elements = await utils.waitForElements('a#selected');
+    const elements = await utils.waitForElements('a.selected');
 
     // Display a centered message and wait for the button to be clicked
     await utils.showMessage({ message: `Ok, let's start.<br><br>Press continue!` button: 'Continue' });

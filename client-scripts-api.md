@@ -294,7 +294,7 @@ Payload:
     },
     hash: '#',
   },
-  action: 'PUSH',
+  action: 'PUSH', // PUSH, REPLACE
 }
 ```
 
@@ -313,7 +313,7 @@ Payload:
 
 The property `resultCount` is optional and could be omitted if result count is not known or not available.
 
-### `resultsFilterChange`
+### `filterChange`
 
 Subject changed the filters for results and applied the filters or initial empty filter has been applied.
 
@@ -323,8 +323,7 @@ Payload:
 {
   activeFilters: {
     brandName: ['snickers', 'milka', 'lindt', 'm&ms'],
-  }
-  activeFilterCount: 4,
+  },
   resultCount: 46, // Results after filter has been applied
 }
 ```

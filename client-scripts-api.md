@@ -7,6 +7,7 @@ The jobs run on the same context as the displayed content, typically that would 
 Two types of hook can be set using:
 * `setInitHook(fn)`: job will run only once, the first time the script is used, before the task begins.
 * `setTaskHook(stage, fn)`: job runs on each task.
+* `setTeardownHook(fn)`: job will run only once, before we navigate away from the in-context app to go back to a survey.
 
 This is a sample application that loads an external sdk and calls its methods:
 
@@ -24,6 +25,11 @@ window.setTaskHook('preparation', () => window.SDK.prepareUser());
 window.setTaskHook('recording', ({ context }) => window.SDK.startRecording(context.session.id));
 
 window.setTaskHook('completion', () => window.SDK.stopRecording());
+
+window.setTeardownHook(async ({ utils }) => { 
+  const sdk = await utils.waitFor(() => window.SDK);
+  await sdk.cleanup();
+});
 ```
 
 ## jobs
@@ -355,7 +361,7 @@ Payload:
 }
 ```
 
-### E-Commerce specific events
+### e-commerce specific events
 
 #### `ecomCheckout`
 

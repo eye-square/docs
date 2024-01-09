@@ -1,18 +1,19 @@
 # in-context hook api
 
-hooks are a means to attach jobs at specific moments of a task's lifecycle. 
+hooks are a means to attach jobs at specific moments of a task's lifecycle.
 
 The jobs run on the same context as the displayed content, typically that would be the top frame. They are also blocking: if a promise is returned, the internal job runner will wait for it to resolve before advancing to he next task stage.
 
-Two types of hook can be set using:
-* `setInitHook(fn)`: job will run only once, the first time the script is used, before the task begins.
-* `setTaskHook(stage, fn)`: job runs on each task.
-* `setTeardownHook(fn)`: job will run only once, before we navigate away from the in-context app to go back to a survey.
+Three types of hook can be set using:
+
+- `setInitHook(fn)`: job will run only once, the first time the script is used, before the task begins.
+- `setTaskHook(stage, fn)`: job runs on each task.
+- `setTeardownHook(fn)`: job will run only once, before we navigate away from the in-context app to go back to a survey.
 
 This is a sample application that loads an external sdk and calls its methods:
 
 ```javascript
-window.setInitHook(async ({ utils }) => { 
+window.setInitHook(async ({ utils }) => {
   // load our bundle
   await utils.createScript('https://extern.integration.com');
   // our script creates an SDK object globally, wait for it
@@ -26,7 +27,7 @@ window.setTaskHook('recording', ({ context }) => window.SDK.startRecording(conte
 
 window.setTaskHook('completion', () => window.SDK.stopRecording());
 
-window.setTeardownHook(async ({ utils }) => { 
+window.setTeardownHook(async ({ utils }) => {
   const sdk = await utils.waitFor(() => window.SDK);
   await sdk.cleanup();
 });
@@ -37,7 +38,7 @@ window.setTeardownHook(async ({ utils }) => {
 A job is just a function that receives a single argument:
 
 ```javascript
-window.setTaskHook('recording', ({ context, channel, state }) => { });
+window.setTaskHook('recording', ({ context, channel, state }) => {});
 ```
 
 The argument consists of the following fields
@@ -45,10 +46,11 @@ The argument consists of the following fields
 - `context` is an immutable object that holds the current task and session configuration.
 
 - `channel` is used to send and receive messages using an interface similar to a [broadcast channel](https://developer.mozilla.org/en-US/docs/Web/API/Broadcast_Channel_API):
+
   ```javascript
-  window.setTaskHook("recording", ({ channel }) => {
+  window.setTaskHook('recording', ({ channel }) => {
     // Add event listener
-    channel.on((event) => {
+    channel.on(event => {
       // Handle events coming in through the channel
     });
   });
@@ -57,34 +59,40 @@ The argument consists of the following fields
   For more info on the events received and ways to filter for them, see the [event objects section](#event-objects).
 
 - `state` is used to share state between jobs. All jobs can return an object that will be merged with the current state and available for all subsequent jobs. Scripts are free to use the global namespace, but we recommend using the `state` object to avoid conflicts and keep things tidy.
-  ```javascript
-  window.setInitHook(({ state }) => ({ taskCount: 0 })); 
 
-  window.setTaskHook("recording", ({ state }) => ({
-    taskCount: state.taskCount + 1 
+  ```javascript
+  window.setInitHook(({ state }) => ({ taskCount: 0 }));
+
+  window.setTaskHook('recording', ({ state }) => ({
+    taskCount: state.taskCount + 1,
   }));
 
-  window.setTaskHook("completion", ({ state }) => {
-    console.log('tasks completed:', state.taskCount)
+  window.setTaskHook('completion', ({ state }) => {
+    console.log('tasks completed:', state.taskCount);
   });
   ```
+
   In a two task setup, the script above should print:
+
   ```log
   tasks completed: 1
   tasks completed: 2
   ```
 
 - `render` is a utility function for rendering custom content. It's meant as a way to help hide and manage the rendered content after each stage
-  ```javascript
-  window.setTaskHook('preparation', ({ render }) =>
-    new Promise((resolve) => {
-      const warningDiv = document.createElement('div');
-      warningDiv.innerText = 'hey, watch out!';
 
-      // the div will be automatically shown and hidden after 2 seconds
-      render(div);
-      setTimeout(resolve, 2000);
-    })
+  ```javascript
+  window.setTaskHook(
+    'preparation',
+    ({ render }) =>
+      new Promise(resolve => {
+        const warningDiv = document.createElement('div');
+        warningDiv.innerText = 'hey, watch out!';
+
+        // the div will be automatically shown and hidden after 2 seconds
+        render(div);
+        setTimeout(resolve, 2000);
+      })
   );
   ```
 
@@ -123,6 +131,9 @@ The argument consists of the following fields
     // wait for multiple elements using css selectors
     const elements = await utils.waitForElements('a.selected');
 
+    // a key / value pair that will be added to the session params and reported back to the survey
+    await utils.setSessionParam('consentFormAccepted', '1');
+
     // Display a centered message and wait for the button to be clicked
     await utils.showMessage({ message: `Ok, let's start.<br><br>Press continue!` button: 'Continue' });
   });
@@ -140,8 +151,8 @@ An event object will have the following structure:
   timestamp: 1666266197290,
   // event source information
   origin: {
-    path: ['newsfeed', 'post', 0, 'video'], 
-    trackingId: 'value', // optional 
+    path: ['newsfeed', 'post', 0, 'video'],
+    trackingId: 'value', // optional
     domElement: videoDomElement, // optional (in case there is a DOM element related to the event)
     tracked: true
   },
@@ -163,8 +174,8 @@ react to only the events that you need to. There are multiple properties that ar
 For now you can filter by using an `if` clause:
 
 ```js
-window.setTaskHook("recording", ({ channel }) => {
-  channel.on((event) => {
+window.setTaskHook('recording', ({ channel }) => {
+  channel.on(event => {
     if (event.origin.tracked && event.type === 'mediaPause') {
       // react to the target video being paused
     }
@@ -191,7 +202,7 @@ event has happened on (e.g. a `video` or `static` (for images) in a post).
 An example is a video in a post:
 
 ```js
-path: ['feed', 'post', 1, 'video']
+path: ['feed', 'post', 1, 'video'];
 ```
 
 The above describes that the event happened on a video element in the second post of the news- or videofeed.
@@ -213,7 +224,8 @@ Global events triggered at the beginning and right before the end of each task.
 Payload:
 
 ```js
-{ }
+{
+}
 ```
 
 ### `mediaStart`
@@ -292,7 +304,7 @@ Payload:
 
 ```js
 {
-  value: true|false
+  value: true | false;
 }
 ```
 
@@ -354,10 +366,10 @@ Payload:
 
 ```js
 {
-  hasNextPage: true
-  hasPrevPage: true
-  page: 6
-  totalPageCount: 59
+  hasNextPage: true;
+  hasPrevPage: true;
+  page: 6;
+  totalPageCount: 59;
 }
 ```
 
@@ -365,7 +377,7 @@ Payload:
 
 #### `ecomCheckout`
 
-Subject checks out and ends their shopping journey. Includes the products that were in the basket in 
+Subject checks out and ends their shopping journey. Includes the products that were in the basket in
 the time of the checkout.
 
 Payload:
@@ -387,7 +399,7 @@ Payload:
 
 #### `ecomBasketQuantityChange`
 
-Subject changes the quantity of a product, either by adding it to the basket for the first time, 
+Subject changes the quantity of a product, either by adding it to the basket for the first time,
 removing it from the basket or changing the quantity explicitly.
 
 Payload:

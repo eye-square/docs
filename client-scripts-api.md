@@ -7,29 +7,33 @@ The jobs run on the same context as the displayed content, typically that would 
 Three types of hook can be set using:
 
 - `setInitHook(fn)`: job will run only once, the first time the script is used, before the task begins.
+
 - `setTaskHook(stage, fn)`: job runs on each task.
+
 - `setTeardownHook(fn)`: job will run only once, before we navigate away from the in-context app to go back to a survey.
 
 This is a sample application that loads an external sdk and calls its methods:
 
 ```javascript
 window.setInitHook(async ({ utils }) => {
-  // load our bundle
-  await utils.createScript('https://extern.integration.com');
-  // our script creates an SDK object globally, wait for it
-  await utils.waitFor(() => window.SDK);
+	// load our bundle
+	await utils.createScript('https://extern.integration.com');
+	// our script creates an SDK object globally, wait for it
+	await utils.waitFor(() => window.SDK);
 });
 
 window.setTaskHook('preparation', () => window.SDK.prepareUser());
 
 // use eye-square session id to identify this session
-window.setTaskHook('recording', ({ context }) => window.SDK.startRecording(context.session.id));
+window.setTaskHook('recording', ({ context }) =>
+	window.SDK.startRecording(context.session.id)
+);
 
 window.setTaskHook('completion', () => window.SDK.stopRecording());
 
 window.setTeardownHook(async ({ utils }) => {
-  const sdk = await utils.waitFor(() => window.SDK);
-  await sdk.cleanup();
+	const sdk = await utils.waitFor(() => window.SDK);
+	await sdk.cleanup();
 });
 ```
 
@@ -49,10 +53,10 @@ The argument consists of the following fields
 
   ```javascript
   window.setTaskHook('recording', ({ channel }) => {
-    // Add event listener
-    channel.on(event => {
-      // Handle events coming in through the channel
-    });
+  	// Add event listener
+  	channel.on((event) => {
+  		// Handle events coming in through the channel
+  	});
   });
   ```
 
@@ -64,11 +68,11 @@ The argument consists of the following fields
   window.setInitHook(({ state }) => ({ taskCount: 0 }));
 
   window.setTaskHook('recording', ({ state }) => ({
-    taskCount: state.taskCount + 1,
+  	taskCount: state.taskCount + 1,
   }));
 
   window.setTaskHook('completion', ({ state }) => {
-    console.log('tasks completed:', state.taskCount);
+  	console.log('tasks completed:', state.taskCount);
   });
   ```
 
@@ -83,16 +87,16 @@ The argument consists of the following fields
 
   ```javascript
   window.setTaskHook(
-    'preparation',
-    ({ render }) =>
-      new Promise(resolve => {
-        const warningDiv = document.createElement('div');
-        warningDiv.innerText = 'hey, watch out!';
+  	'preparation',
+  	({ render }) =>
+  		new Promise((resolve) => {
+  			const warningDiv = document.createElement('div');
+  			warningDiv.innerText = 'hey, watch out!';
 
-        // the div will be automatically shown and hidden after 2 seconds
-        render(div);
-        setTimeout(resolve, 2000);
-      })
+  			// the div will be automatically shown and hidden after 2 seconds
+  			render(div);
+  			setTimeout(resolve, 2000);
+  		})
   );
   ```
 
@@ -173,13 +177,13 @@ react to only the events that you need to. There are multiple properties that ar
 
 For now you can filter by using an `if` clause:
 
-```js
+```javascript
 window.setTaskHook('recording', ({ channel }) => {
-  channel.on(event => {
-    if (event.origin.tracked && event.type === 'mediaPause') {
-      // react to the target video being paused
-    }
-  });
+	channel.on((event) => {
+		if (event.origin.tracked && event.type === 'mediaPause') {
+			// react to the target video being paused
+		}
+	});
 });
 ```
 
@@ -199,10 +203,15 @@ The origin path describes the position of the element the event happened on in t
 Often you want to only want to look at the last segment of that path as it describes the element the
 event has happened on (e.g. a `video` or `static` (for images) in a post).
 
-An example is a video in a post:
+An example of a video in a post:
 
-```js
-path: ['feed', 'post', 1, 'video'];
+```jsonc
+{
+	"type": "mediaStart",
+	"origin": {
+		"path": ["feed", "post", 1, "video"]
+	}
+}
 ```
 
 The above describes that the event happened on a video element in the second post of the news- or videofeed.
@@ -223,9 +232,8 @@ Global events triggered at the beginning and right before the end of each task.
 
 Payload:
 
-```js
-{
-}
+```jsonc
+{}
 ```
 
 ### `mediaStart`
@@ -234,10 +242,10 @@ Play/start of a video or audio.
 
 Payload:
 
-```js
+```jsonc
 {
-  muted: true, // mute state of the media at start time
-  currentTime: 12.34, // current time of the media in seconds the moment the event happened
+	"muted": true, // mute state of the media at start time
+	"currentTime": 12.34 // current time of the media in seconds the moment the event happened
 }
 ```
 
@@ -247,10 +255,10 @@ Mid playtime pause of a video or audio (excluding the video ending).
 
 Payload: same as `mediaStart` (same for all media events)
 
-```js
+```jsonc
 {
-  muted: true, // mute state of the media at start time
-  currentTime: 12.34, // current time of the media in seconds the moment the event happened
+	"muted": true, // mute state of the media at start time
+	"currentTime": 12.34 // current time of the media in seconds the moment the event happened
 }
 ```
 
@@ -258,10 +266,10 @@ Payload: same as `mediaStart` (same for all media events)
 
 Video or audio has ended (`currentTime` === `duration`).
 
-```js
+```jsonc
 {
-  muted: true, // mute state of the media at start time
-  currentTime: 12.34, // current time of the media in seconds the moment the event happened
+	"muted": true, // mute state of the media at start time
+	"currentTime": 12.34 // current time of the media in seconds the moment the event happened
 }
 ```
 
@@ -269,10 +277,10 @@ Video or audio has ended (`currentTime` === `duration`).
 
 Fires when the media's `currentTime` attribute is updated.
 
-```js
+```jsonc
 {
-  muted: true, // mute state of the media at start time
-  currentTime: 12.34, // current time of the media in seconds the moment the event happened
+	"muted": true, // mute state of the media at start time
+	"currentTime": 12.34 // current time of the media in seconds the moment the event happened
 }
 ```
 
@@ -282,15 +290,15 @@ An element changes visibility ratio between 0 (not visible at all) and 1 (fully 
 
 Payload:
 
-```js
+```jsonc
 {
-  visibilityRatio: 0.545, // Ratio of how much the element is visible/in the viewport
-  visibleRect: {
-    x: 100, // X position in the viewport
-    y: 200, // Y position in the viewport
-    width: 340, // Width of the visible part of the element in pixel
-    height: 340, // Height of the visible part of the element in pixel
-  }
+	"visibilityRatio": 0.545, // Ratio of how much the element is visible/in the viewport
+	"visibleRect": {
+		"x": 100, // X position in the viewport
+		"y": 200, // Y position in the viewport
+		"width": 340, // Width of the visible part of the element in pixel
+		"height": 340 // Height of the visible part of the element in pixel
+	}
 }
 ```
 
@@ -302,9 +310,9 @@ This event is used to express changes in boolean values.
 
 Payload:
 
-```js
+```jsonc
 {
-  value: true | false;
+	value: true | false;
 }
 ```
 
@@ -314,17 +322,17 @@ This event is triggered when a change in the internal router happens.
 
 Payload:
 
-```js
+```jsonc
 {
-  location: {
-    pathname: '/products',
-    search: '?page=0',
-    query: {
-      page: 0,
-    },
-    hash: '#',
-  },
-  action: 'PUSH', // PUSH, REPLACE
+	"location": {
+		"pathname": "/products",
+		"search": "?page=0",
+		"query": {
+			"page": 0
+		},
+		"hash": "#"
+	},
+	"action": "PUSH" // PUSH, REPLACE
 }
 ```
 
@@ -334,10 +342,10 @@ Subject changed and applied a new search term. Includes also the result count fo
 
 Payload:
 
-```js
+```jsonc
 {
-  searchTerm: 'chocolate',
-  resultCount: 145,
+	"searchTerm": "chocolate",
+	"resultCount": 145
 }
 ```
 
@@ -349,12 +357,12 @@ Subject changed the filters for results and applied the filters or initial empty
 
 Payload:
 
-```js
+```jsonc
 {
-  activeFilters: {
-    brandName: ['snickers', 'milka', 'lindt', 'm&ms'],
-  },
-  resultCount: 46, // Results after filter has been applied
+	"activeFilters": {
+		"brandName": ["snickers", "milka", "lindt", "m&ms"]
+	},
+	"resultCount": 46 // Results after filter has been applied
 }
 ```
 
@@ -364,12 +372,12 @@ Results page has been changed or initialized. Origin of event tells where the pa
 
 Payload:
 
-```js
+```jsonc
 {
-  hasNextPage: true;
-  hasPrevPage: true;
-  page: 6;
-  totalPageCount: 59;
+	"hasNextPage": true,
+	"hasPrevPage": true,
+	"page": 6,
+	"totalPageCount": 59
 }
 ```
 
@@ -382,18 +390,20 @@ the time of the checkout.
 
 Payload:
 
-```js
+```jsonc
 {
-  basketContents: [{
-    id: '1234', // Product ID
-    price: 1.99,
-    quantity: 6,
-    sources: ['results-page', 'details-page', 'details-page-related'], // Where the products were added from
-    time: 12345, // Time in ms after session start of the first addition
-  }],
-  total: 11.94,
-  totalDiscounted: 11.43,
-  discountApplied: true,
+	"basketContents": [
+		{
+			"id": "1234", // Product ID
+			"price": 1.99,
+			"quantity": 6,
+			"sources": ["results-page", "details-page", "details-page-related"], // Where the products were added from
+			"time": 12345 // Time in ms after session start of the first addition
+		}
+	],
+	"total": 11.94,
+	"totalDiscounted": 11.43,
+	"discountApplied": true
 }
 ```
 
@@ -404,13 +414,13 @@ removing it from the basket or changing the quantity explicitly.
 
 Payload:
 
-```js
+```jsonc
 {
-  id: '1234', // Product ID
-  quantity: 1,
-  quantityDelta: 1,
-  productTotal: 4.99,
-  basketTotal: 23.52,
-  source: 'checkout', // Where the quantity was changed at
+	"id": "1234", // Product ID
+	"quantity": 1,
+	"quantityDelta": 1,
+	"productTotal": 4.99,
+	"basketTotal": 23.52,
+	"source": "checkout" // Where the quantity was changed at
 }
 ```

@@ -312,7 +312,7 @@ Payload:
 
 ```jsonc
 {
-	value: true | false;
+	"value": true // true | false;
 }
 ```
 

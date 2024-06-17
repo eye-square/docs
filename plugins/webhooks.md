@@ -159,3 +159,5 @@ An example payload looks like this:
     },
   }
   ```
+
+  ### WIP: session payloads

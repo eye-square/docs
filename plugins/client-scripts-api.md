@@ -1,4 +1,8 @@
-# in-context hook api
+<h1 align="center">
+  <img src="../images/logo.png" alt="in-context" width="75" height="75">
+</h1>
+
+# client scripts hook api
 
 hooks are a means to attach jobs at specific moments of a task's lifecycle.
 

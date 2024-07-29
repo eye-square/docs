@@ -1,12 +1,23 @@
-# in-context hook api
+# in-context scripts api
 
-hooks are a means to attach jobs at specific moments of a task's lifecycle.
+The in-context scripts api allows you to run custom scripts inside an in-context app. The use cases are many, but some examples include:
 
-The jobs run on the same context as the displayed content, typically that would be the top frame. They are also blocking: if a promise is returned, the internal job runner will wait for it to resolve before advancing to he next task stage.
+- Loading external SDKs
+- Adding extra instructions or preparation steps
+- Sending extra variables to the survey
+- Listening to events and storing them for later analysis
+- Modifying the DOM during the task, for example to highlight elements or add overlays
+- Running custom logic at the end of a task
+
+For this, we provide we provide a very simple API that allows you to attach jobs at specific moments of a task's lifecycle. The jobs are essentially just async functions that receive all session information and common utilities useful for the cases above.
+
+# setting up hooks
+
+The jobs run on the same context as the displayed content, typically that would be the top window frame. Hooks are **blocking**: if a promise is returned, it will be waited for before advancing to he next task stage. An exception to this is the `recording` stage, the duration of the actual task is defined in the project and can't be modified by the script.
 
 Three types of hook can be set using:
 
-- `setInitHook(fn)`: job will run only once, the first time the script is used, before the task begins.
+- `setInitHook(fn)`: job will run only once, the first time the script is used, before the task or tasks begin.
 
 - `setTaskHook(stage, fn)`: job runs on each task.
 
@@ -16,16 +27,16 @@ This is a sample application that loads an external sdk and calls its methods:
 
 ```javascript
 window.setInitHook(async ({ utils }) => {
-	// load our bundle
-	await utils.createScript('https://extern.integration.com');
-	// our script creates an SDK object globally, wait for it
+	// load an external sdk
+	await utils.createScript('https://external.integration.com');
+	// maybe wait for the sdk to be available
 	await utils.waitFor(() => window.SDK);
 });
 
 window.setTaskHook('preparation', () => window.SDK.prepareUser());
 
-// use eye-square session id to identify this session
 window.setTaskHook('recording', ({ context }) =>
+	// you can use the session id to map your data to the current session
 	window.SDK.startRecording(context.session.id)
 );
 
@@ -36,6 +47,8 @@ window.setTeardownHook(async ({ utils }) => {
 	await sdk.cleanup();
 });
 ```
+
+In the example above, applied to a two task setup, the task hooks would run twice, once for each task. The init hook would run only once, before the first task, and the teardown hook would run only once, after the second task.
 
 ## jobs
 
@@ -140,6 +153,10 @@ The argument consists of the following fields
 
     // Display a centered message and wait for the button to be clicked
     await utils.showMessage({ message: `Ok, let's start.<br><br>Press continue!` button: 'Continue' });
+
+    // Display a ok/cancel dialog
+    // todo change this to promise
+    const accepted = await utils.confirm({ message: 'We would like to access your camera' confirmText: 'Ok', rejectText: 'Cancel'  });
   });
   ```
 

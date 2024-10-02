@@ -6,7 +6,7 @@
 
 In-context provides plugins the options to listen to webhooks in order to react on events that happen within in-context.
 
-To setup a webhook you need to provide a `http POST` endpoint that in-context then notifies when system events occur.
+To setup a webhook you need to provide an `http POST` endpoint that in-context then calls when system events occur. The call includes information about the event that can be used to process it.
 
 *example webhook definition*
 
@@ -46,8 +46,8 @@ e2-signature-256: sha256=757107ea0eb2509fc211221cce984b8a37570b6d7586c22c46f4379
 
 The following webhook events are possible: 
 
-- projectCreated: A project has been created with at least one subject group using your plugin.
-- projectUpdated: A project has been updated with at least one subject group using your plugin after the update.
+- projectCreated: A project has been created with at least one subject group that is using your plugin.
+- projectUpdated: A project has been updated with at least one subject group that is using your plugin after the update.
 - sessionCreate: A subject has started a test/session with your plugin being used.
 - sessionFinish: A subject has finished a test/session with your plugin being used.
 

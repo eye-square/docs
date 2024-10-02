@@ -1,3 +1,7 @@
+<h1 align="center">
+  <img src="../images/logo.png" alt="in-context" width="75" height="75">
+</h1>
+
 # in-context scripts api
 
 The in-context scripts api allows you to run custom scripts inside an in-context app. The use cases are many, but some examples include:

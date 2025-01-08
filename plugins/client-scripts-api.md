@@ -4,6 +4,15 @@
 
 # in-context scripts api
 
+## Table of Contents
+
+- [Setting Up Hooks](#setting-up-hooks)
+- [Jobs](#jobs)
+- [Event Objects](#event-objects)
+  - [Filtering Events](#filtering-events)
+  - [Event List](#event-list)
+- [Tracking Custom Elements](#tracking-your-own-elements)
+
 The in-context scripts api allows you to run custom scripts inside an in-context app. The use cases are many, but some examples include:
 
 - Loading external SDKs
@@ -445,3 +454,31 @@ Payload:
 	"source": "checkout" // Where the quantity was changed at
 }
 ```
+
+# tracking your own elements
+
+You can track custom elements using the `utils.trackElement` function. This allows you to receive events for elements that aren't automatically tracked by in-context.
+
+```javascript
+window.setTaskHook('preparation', ({ utils }) => {
+	// track a video element for visibility and media events
+	const video = document.querySelector('video');
+	utils.trackElement(video, {
+		trackingId: 'my-video',
+		path: ['some-section', 'video'],
+	});
+
+	// track a div for visibility
+	const div = document.querySelector('.important-content');
+	utils.trackElement(div, { trackingId: 'section-1' });
+});
+```
+
+The function accepts two parameters:
+
+- `element`: The DOM element to track. If it's a media element (video/audio), it will track media events. For other elements, it will track visibility changes.
+
+- `origin` (optional): An object with tracking configuration:
+  - `trackingId`: Unique identifier for the element. If not provided, a UUID is auto-generated
+  - `path`: Array describing the location of the element in your content hierarchy. If not provided, defaults to `[trackingId]`
+  - `tracked`: Boolean indicating if this is a primary element of interest. Defaults to `true` if not specified

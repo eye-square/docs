@@ -461,16 +461,16 @@ You can track custom elements using the `utils.trackElement` function. This allo
 
 ```javascript
 window.setTaskHook('preparation', ({ utils }) => {
-	// track a video element for visibility and media events
+	// track a div for visibility
+	const div = document.querySelector('.important-content');
+	utils.trackElement(div, { trackingId: 'section-1' });
+
+	// track a video element for visibility and media events with a custom path
 	const video = document.querySelector('video');
 	utils.trackElement(video, {
 		trackingId: 'my-video',
 		path: ['some-section', 'video'],
 	});
-
-	// track a div for visibility
-	const div = document.querySelector('.important-content');
-	utils.trackElement(div, { trackingId: 'section-1' });
 });
 ```
 

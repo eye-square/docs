@@ -6,6 +6,7 @@
 
 ## Table of Contents
 
+- [Setting up a development environment](./script-development.md)
 - [Setting Up Hooks](#setting-up-hooks)
 - [Jobs](#jobs)
 - [Event Objects](#event-objects)
@@ -50,7 +51,7 @@ window.setTaskHook('preparation', () => window.SDK.prepareUser());
 
 window.setTaskHook('recording', ({ context }) =>
 	// you can use the session id to map your data to the current session
-	window.SDK.startRecording(context.session.id)
+	window.SDK.startRecording(context.session.id),
 );
 
 window.setTaskHook('completion', () => window.SDK.stopRecording());
@@ -122,7 +123,7 @@ The argument consists of the following fields
   			// the div will be automatically shown and hidden after 2 seconds
   			render(div);
   			setTimeout(resolve, 2000);
-  		})
+  		}),
   );
   ```
 
@@ -239,8 +240,8 @@ An example of a video in a post:
 {
 	"type": "mediaStart",
 	"origin": {
-		"path": ["feed", "post", 1, "video"]
-	}
+		"path": ["feed", "post", 1, "video"],
+	},
 }
 ```
 
@@ -275,7 +276,7 @@ Payload:
 ```jsonc
 {
 	"muted": true, // mute state of the media at start time
-	"currentTime": 12.34 // current time of the media in seconds the moment the event happened
+	"currentTime": 12.34, // current time of the media in seconds the moment the event happened
 }
 ```
 
@@ -288,7 +289,7 @@ Payload: same as `mediaStart` (same for all media events)
 ```jsonc
 {
 	"muted": true, // mute state of the media at start time
-	"currentTime": 12.34 // current time of the media in seconds the moment the event happened
+	"currentTime": 12.34, // current time of the media in seconds the moment the event happened
 }
 ```
 
@@ -299,7 +300,7 @@ Video or audio has ended (`currentTime` === `duration`).
 ```jsonc
 {
 	"muted": true, // mute state of the media at start time
-	"currentTime": 12.34 // current time of the media in seconds the moment the event happened
+	"currentTime": 12.34, // current time of the media in seconds the moment the event happened
 }
 ```
 
@@ -310,7 +311,7 @@ Fires when the media's `currentTime` attribute is updated.
 ```jsonc
 {
 	"muted": true, // mute state of the media at start time
-	"currentTime": 12.34 // current time of the media in seconds the moment the event happened
+	"currentTime": 12.34, // current time of the media in seconds the moment the event happened
 }
 ```
 
@@ -327,8 +328,8 @@ Payload:
 		"x": 100, // X position in the viewport
 		"y": 200, // Y position in the viewport
 		"width": 340, // Width of the visible part of the element in pixel
-		"height": 340 // Height of the visible part of the element in pixel
-	}
+		"height": 340, // Height of the visible part of the element in pixel
+	},
 }
 ```
 
@@ -342,7 +343,7 @@ Payload:
 
 ```jsonc
 {
-	"value": true // true | false;
+	"value": true, // true | false;
 }
 ```
 
@@ -358,11 +359,11 @@ Payload:
 		"pathname": "/products",
 		"search": "?page=0",
 		"query": {
-			"page": 0
+			"page": 0,
 		},
-		"hash": "#"
+		"hash": "#",
 	},
-	"action": "PUSH" // PUSH, REPLACE
+	"action": "PUSH", // PUSH, REPLACE
 }
 ```
 
@@ -375,7 +376,7 @@ Payload:
 ```jsonc
 {
 	"searchTerm": "chocolate",
-	"resultCount": 145
+	"resultCount": 145,
 }
 ```
 
@@ -390,9 +391,9 @@ Payload:
 ```jsonc
 {
 	"activeFilters": {
-		"brandName": ["snickers", "milka", "lindt", "m&ms"]
+		"brandName": ["snickers", "milka", "lindt", "m&ms"],
 	},
-	"resultCount": 46 // Results after filter has been applied
+	"resultCount": 46, // Results after filter has been applied
 }
 ```
 
@@ -407,7 +408,7 @@ Payload:
 	"hasNextPage": true,
 	"hasPrevPage": true,
 	"page": 6,
-	"totalPageCount": 59
+	"totalPageCount": 59,
 }
 ```
 
@@ -428,12 +429,12 @@ Payload:
 			"price": 1.99,
 			"quantity": 6,
 			"sources": ["results-page", "details-page", "details-page-related"], // Where the products were added from
-			"time": 12345 // Time in ms after session start of the first addition
-		}
+			"time": 12345, // Time in ms after session start of the first addition
+		},
 	],
 	"total": 11.94,
 	"totalDiscounted": 11.43,
-	"discountApplied": true
+	"discountApplied": true,
 }
 ```
 
@@ -451,7 +452,7 @@ Payload:
 	"quantityDelta": 1,
 	"productTotal": 4.99,
 	"basketTotal": 23.52,
-	"source": "checkout" // Where the quantity was changed at
+	"source": "checkout", // Where the quantity was changed at
 }
 ```
 

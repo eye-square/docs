@@ -53,9 +53,9 @@ The api supports two different authentication types:
 - User based authentication via our in context portal. 
 - Access secret based authentication. Use this for server to server based calls. Never expose your secret to the client side!
 
-Our interactive explorer is able to use both authentication methods in behalf of your account. Just choose which method you want to use in the credentials dropdown. For access secrets you have to paste your api secret you want to use to the input next to the dropdown, user credentials use the token of your own user account.
+Our interactive explorer is able to use both authentication methods in behalf of your account. Just choose which method you want to use in the credentials dropdown. For access secrets you have to paste your access secret into the input next to the dropdown. For user credentials the explorer automatically uses the token of your own user account.
 
-As we expose different graphql schemas for different authentication methods (an api secret might have different access permissions than a normal user) please make sure to use the correct credentials here when testing queries.
+As we expose different graphql schemas for different authentication methods (an access secret might have different access permissions than a normal user) please make sure to use the correct credentials here when testing queries.
 
 ---
 

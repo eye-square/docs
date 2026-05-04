@@ -77,7 +77,7 @@ When authentication of the user was successful you will recieve a user profile i
 
 !!COMING SOON!! You can create and manage access secrets as an organization admin within your organization settings. !!COMING SOON!!
 
-To make an access secret based call it as a header:
+To make an access secret based set it as a header:
 
   `Authorization: Secret your.access.secret`
 

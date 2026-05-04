@@ -50,7 +50,7 @@ Unfortunately, due to some restrictions in the current graphiql explorer you mig
 
 The api supports two different authentication types:
 
-- User based authentication via our in context portal. 
+- User based authentication via our in-context portal. 
 - Access secret based authentication. Use this for server to server based calls. Never expose your secret to the client side!
 
 Our interactive explorer is able to use both authentication methods in behalf of your account. Just choose which method you want to use in the credentials dropdown. For access secrets you have to paste your access secret into the input next to the dropdown. For user credentials the explorer automatically uses the token of your own user account.

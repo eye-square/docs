@@ -75,9 +75,14 @@ When authentication of the user was successful you will recieve a user profile i
 
 ### Access secret based authentication
 
-!!COMING SOON!! You can create and manage access secrets as an organization admin within your organization settings. !!COMING SOON!!
+You can create and manage access secrets as an organization admin within your organization settings. 
 
-To make an access secret based set it as a header:
+To manage secrets you have to have admin rights of your organization. You can find and manage all your organizations secrets under
+
+[https://accounts.incontext-research.com/organizations/me/secrets](https://accounts.incontext-research.com/organizations/me/secrets)
+
+
+To make an access secret based call, set it as a header:
 
   `Authorization: Secret your.access.secret`
 

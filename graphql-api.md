@@ -1,203 +1,191 @@
-# Table of content
+# In Context API v4
 
-- [How to use this api](#how-to-use-this-api)
-  - [Graphql](#graphql)
-  - [The Graphiql explorer](#the-graphiql-explorer)
-  - [Authentication and authorization](#authentication-and-authorization)
-  - [Pagination](#pagination)
-  - [Non standard JSON-type](#non-standard-json-type)
-  - [Error responses](#error-responses)
-- [Project model](#project-model)
-  - [Context tasks](#context-tasks)
-  - [Survey tasks](#survey-tasks)
-  - [Presenter tasks](#presenter-tasks)
-- [TV player](#tv-player)
-- [System entry policies](#system-entry-policies)
-- [Session validation](#session-validation)
-- [Success evaluation](#success-evaluation)
+The In Context API lets you create and edit In Context projects from your own systems, send respondents into a study, and read back the behavioral data that was recorded. It is a single [GraphQL](https://graphql.org/learn/) endpoint.
+
+| | |
+| --- | --- |
+| Endpoint | `POST https://api.incontext-research.com/v4/graphql` |
+| Authentication | `Authorization: Secret <your API secret>` header |
+| Format | JSON request body with `query` and optional `variables` and `operationName` |
+| Interactive explorer | [portal.incontext-research.com/docs/explorer](https://portal.incontext-research.com/docs/explorer) (requires a Portal login) |
+| Source of this page | [github.com/eye-square/docs](https://github.com/eye-square/docs/blob/master/graphql-api.md) |
+
+Related guides: [survey integration](https://incontext-research.com/docs/surveyintegration/), [supported ad formats](https://incontext-research.com/docs/adsupport/), [system requirements](https://incontext-research.com/docs/requirements/), [metrics per format](https://e2.ms/apimetrics), [supported languages per context](https://e2.ms/local), [plugins and webhooks](https://github.com/eye-square/docs/blob/master/plugins/plugins.md).
+
+## Contents
+
+- [Quickstart](#quickstart)
+- [Concepts](#concepts)
+- [Authentication](#authentication)
+- [Making requests](#making-requests)
+- [Pagination](#pagination)
+- [Errors](#errors)
+- [Task data and format discovery](#task-data-and-format-discovery)
+- [Project reference](#project-reference)
+- [Supported context types](#supported-context-types)
+- [Presenter and setup tasks](#presenter-and-setup-tasks)
 - [Instructions](#instructions)
-- [List of supported languages](#list-of-supported-languages)
-- [List of supported operating systems and browsers](#list-of-supported-operating-systems-and-browsers)
+- [Deployment filters](#deployment-filters)
+- [Sending respondents and survey integration](#sending-respondents-and-survey-integration)
+- [Success evaluation](#success-evaluation)
 - [Query test results](#query-test-results)
-  - [Query filters](#query-filters)
-  - [Metrics](#metrics)
-  - [Timelines](#timelines)
-- [Contact](#contact)
-
-# How to use this api
-
-## Graphql
-
-Version 4 of the eye-square api is a complete rebuild based on [graphql](https://graphql.org/). With this documentation comes a full api reference and an interactive explorer to make api calls.
-
-The eyesquare api allows you to easily integrate the eye-square in-context solution into your services.
-
-You can find the graphql endpoint under:
-
-POST [https://api.incontext-research.com/v4/graphql](https://api.incontext-research.com/v4/graphql)
-
-## The Graphiql explorer
-
-Best starting point for using the api is the [interactive explorer](https://portal.incontext-research.com/docs/explorer). Through it you can easily make api calls and have an interactive feedback for doing so.
-
-We also provide you with some example queries that you can choose in the dropdown from the explorer.
-
-Unfortunately, due to some restrictions in the current graphiql explorer you might see some linting errors where there in reality aren't. If you come across "Expected Value of Type JSON" error as shown in the task.data field you can safely ignore it and make the api call. If something is wrong, the error in the response will tell you what and where.
-
-![falsy error](https://portal.incontext-research.com/images/docs/falsy-explorer-error.png)
-
-## Authentication and authorization
-
-The api supports two different authentication types:
-
-- User based authentication via our in-context portal. 
-- Access secret based authentication. Use this for server to server based calls. Never expose your secret to the client side!
-
-Our interactive explorer is able to use both authentication methods in behalf of your account. Just choose which method you want to use in the credentials dropdown. For access secrets you have to paste your access secret into the input next to the dropdown. For user credentials the explorer automatically uses the token of your own user account.
-
-As we expose different graphql schemas for different authentication methods (an access secret might have different access permissions than a normal user) please make sure to use the correct credentials here when testing queries.
+- [Organization settings](#organization-settings)
+- [Changelog](#changelog)
+- [Support](#support)
 
 ---
 
-### Token based authentication (DEPRECATED)
+# Quickstart
 
-!!DEPRECATED!! We are switching authentication methods to a more secure and robust system. Do not use this method and purely rely on access secrets instead !!DEPRECATED!!
+This walks you from an API secret to your first results in six steps. Every example on this page can be pasted into the [explorer](https://portal.incontext-research.com/docs/explorer) or sent with `curl`.
 
-We use [jwt](https://jwt.io/introduction/)(json web tokens) to authenticate and authorize users. To make an api call, you have to first retrieve a token and then include this token in you api calls. A jwt has an expiration time of 30 days, means after 30 days a user has to request a new token in order to make api calls.
+## Step 1 Get an API secret
 
-To get a token you have to make a post request with email and password of the user to:
+Organization admins create and manage API secrets in the Accounts app: [accounts.incontext-research.com/organizations/me/secrets](https://accounts.incontext-research.com/organizations/me/secrets). A secret belongs either to a team or to the whole organization (see [Team and organization secrets](#team-and-organization-secrets)).
 
-POST [https://api.incontext-research.com/v4/auth](https://api.incontext-research.com/v4/auth)
+Use the secret only from your server. Never ship it to a browser, an app, or a survey page.
 
-When authentication of the user was successful you will recieve a user profile including a freshly generated token.
+## Step 2 Check who you are
 
----
-
-### Access secret based authentication
-
-You can create and manage access secrets as an organization admin within your organization settings. 
-
-To manage secrets you have to have admin rights of your organization. You can find and manage all your organizations secrets under
-
-[https://accounts.incontext-research.com/organizations/me/secrets](https://accounts.incontext-research.com/organizations/me/secrets)
-
-
-To make an access secret based call, set it as a header:
-
-  `Authorization: Secret your.access.secret`
-
-Example call from above:
 ```sh
-curl \
-  -X POST \
+curl https://api.incontext-research.com/v4/graphql \
   -H 'Content-Type: application/json' \
-  -d '{ "query": "{ me { ...on Team { name } ...on Organization { name } }}" }' \
-  -H 'Authorization: Secret your.access.secret' \
-  https://api.incontext-research.com/v4/graphql
+  -H "Authorization: Secret $INCONTEXT_API_SECRET" \
+  -d '{ "query": "{ me { role ... on Team { name } ... on Organization { name } } }" }'
 ```
 
-Results in:
+```json
+{ "data": { "me": { "role": "TEAM", "name": "your-team-name" } } }
+```
 
-```jsonc
+[Open in explorer](https://portal.incontext-research.com/docs/explorer?query=%7B%0A++me+%7B%0A++++role%0A++++...+on+Team+%7B+name+%7D%0A++++...+on+Organization+%7B+name+%7D%0A++%7D%0A%7D%0A&variables=)
+
+If `role` is `PUBLIC`, the secret was not accepted: check the header name, the `Secret` prefix and the value. An unauthenticated request still succeeds, but the schema then contains only `me`, so a missing field or mutation usually means an authentication problem rather than a missing feature.
+
+## Step 3 Pick an ad format
+
+List the available context types and look at the data a format needs:
+
+```graphql
+{
+  __type(name: "CONTEXT_TASK_TYPES") {
+    enumValues { name description }
+  }
+}
+```
+
+```graphql
+{
+  __type(name: "ContextTaskDataFacebookNewsfeedVideoAutoplay") {
+    fields { name description type { kind name ofType { name } } }
+  }
+}
+```
+
+Ask for a ready-made group template to see the defaults and the supported devices for a format and task sequence:
+
+```graphql
+{
+  subjectGroupTemplate(contextType: facebookNewsfeedVideoAutoplay, taskSequence: TASK) {
+    devices
+    description
+    template {
+      device
+      contextMode
+      tasks { nodes { type ... on ContextTask { contextType timeout exposureDuration userGuidance } } }
+    }
+  }
+}
+```
+
+[Open in explorer](https://portal.incontext-research.com/docs/explorer?query=%7B%0A++subjectGroupTemplate%28contextType%3A+facebookNewsfeedVideoAutoplay%2C+taskSequence%3A+TASK%29+%7B%0A++++devices%0A++++description%0A++++template+%7B%0A++++++device%0A++++++contextMode%0A++++++tasks+%7B+nodes+%7B+type+...+on+ContextTask+%7B+contextType+timeout+exposureDuration+userGuidance+%7D+%7D+%7D%0A++++%7D%0A++%7D%0A%7D%0A&variables=)
+
+## Step 4 Create a project
+
+```graphql
+mutation CreateProject($data: ProjectInput!) {
+  projectCreate(data: $data) {
+    id
+    subjectGroups {
+      nodes {
+        id
+        entryUrl
+      }
+    }
+  }
+}
+```
+
+Variables:
+
+```json
 {
   "data": {
-    "me": {
-      "name": "default" // this is now your teams/organizations name
-    }
-  }
-}
-```
-
-If you are not sure if you are logged in as user, team or use the public api, you can ask for the role of the authenticated user with the following query:
-
-[`{ "query": "{ me { role }}" }`](https://portal.incontext-research.com/docs/explorer?query=%7B%0A++me+%7B%0A++++role%0A++%7D%0A%7D%0A&variables=)
-
-Roles can be one of
-
-- user
-- admin 
-- team
-- organization
-
-## Pagination
-
-Every list of elements in the api requires pagination parameters. We are following best practices that can be seen [here](https://graphql.org/learn/pagination/#complete-connection-model).
-
-There are four input params that control pagination:
-
-- first: integer => returns the first x of entries, if after is set, it returns the first x elements after the given Cursor
-- last: integer => returns the last x of entries, if before is set, it returns the last x elements before the given Cursor
-- after: Cursor
-- before: Cursor
-
-Note: first and last as well as after and before exclude each other. Means, that if you have a first param, you cannot set last at the same time.
-
-At the same time the response Object contains a lot of useful information for pagination through the list, it's best explained with an actual query ([view in explorer](https://portal.incontext-research.com/docs/explorer?query=%7B%0A++projects%28last%3A+2%29+%7B+%23+get+the+last+2+projects%0A++++pageInfo+%7B%0A++++++startCursor+%23+cursor+of+first+recieved+edge%0A++++++endCursor+%23+cursor+of+last+recieved+edge%0A++++++hasNextPage+%23+true+if+there+is+content+after+the+last+recieved+edge+%0A++++++hasPreviousPage+%23+true+if+there+is+content+before+the+first+recieved+edge%0A++++%7D%0A++++totalCount+%23+total+number+of+objects+you+can+recieve%0A++++nodes+%7B+%23+shortcut+to+nodes+in+case+you+don%27t+need+a+pagination+cursor%0A++++++...project%0A++++%7D%0A++++edges+%7B%0A++++++node+%7B+%23+the+content+itself%0A++++++++...project%0A++++++%7D%0A++++++cursor+%23+cursor+of+the+edge%2C+only+used+in+pagination+params%0A++++%7D%0A++%7D%0A%7D%0A%0Afragment+project+on+Project+%7B%0A++id%0A%7D&variables=)):
-
-```graphql
-{
-  projects(last: 2) { # get the last 2 projects
-    pageInfo {
-      startCursor # cursor of first recieved edge
-      endCursor # cursor of last recieved edge
-      hasNextPage # true if there is content after the last recieved edge
-      hasPreviousPage # true if there is content before the first recieved edge
-    }
-    totalCount # total number of objects you can recieve
-    nodes { # shortcut to nodes in case you don't need a pagination cursor
-      ...project
-    }
-    edges {
-      node { # the content itself
-        ...project
-      }
-      cursor # cursor of the edge, only used in pagination params
-    }
-  }
-}
-
-fragment project on Project {
-  id
-}
-```
-
-In a lot of cases you wont need the full capacities of pagination. The power of graphQL lets you decide which functionality you use.
-
-For example if you want only retrieve the last 10 projects ([view in explorer](https://portal.incontext-research.com/docs/explorer?query=%7B%0A++projects%28last%3A+10%29+%7B%0A++++nodes+%7B%0A++++++...project%0A++++%7D%0A++%7D%0A%7D%0A%0Afragment+project+on+Project+%7B%0A++id%0A++description%0A%7D%0A&variables=)):
-
-```graphql
-{
-  projects(last: 10) {
-    nodes {
-      ...project
-    }
-  }
-}
-
-fragment project on Project {
-  id
-  description
-}
-```
-
-## Non standard JSON-type
-
-Some of our data structures are very complex and would lead to very big Union types/Queries. For this reason, some of our fields are using a custom implementation of JSON type. A Json type can contain anything. This is mostly used in our project.subjectGroups.tasks.data as the data varies based on the Context type. This has the advantage that we keep your queries short, but the downside that we cannot provide autocompletion for fields inside those JSON formats in the explorer.
-
-Example ([view in explorer](https://portal.incontext-research.com/docs/explorer?query=%7B%0A++projects%28first%3A+1%29+%7B%0A++++nodes+%7B%0A++++++subjectGroups+%7B%0A++++++++nodes+%7B%0A++++++++++tasks+%7B%0A++++++++++++nodes+%7B%0A++++++++++++++...+on+ContextTask+%7B%0A++++++++++++++++data+%23+this+is+our+custom+JSON+type+that+can+contain+pretty+much+anything%0A++++++++++++++%7D%0A++++++++++++%7D%0A++++++++++%7D%0A++++++++%7D%0A++++++%7D%0A++++%7D%0A++%7D%0A%7D%0A&variables=)):
-
-```graphql
-{
-  projects(first: 1) {
-    nodes {
-      subjectGroups {
-        nodes {
-          tasks {
-            nodes {
-              ... on ContextTask {
-                data # this is our custom JSON type that can contain pretty much anything
-              }
+    "description": "Red Cross video test - Facebook feed",
+    "language": "en_US",
+    "billingReference": "PO-12345",
+    "subjectGroups": [
+      {
+        "id": "fb-desktop",
+        "device": "desktop",
+        "contextMode": "public",
+        "tasks": [
+          {
+            "id": "exposure",
+            "type": "context",
+            "contextType": "facebookNewsfeedVideoAutoplay",
+            "adName": "Red Cross",
+            "userGuidance": false,
+            "timeout": 120,
+            "exposureDuration": 60,
+            "data": {
+              "brandName": "American Red Cross",
+              "text": "Join us today at redcross.org",
+              "logoSrc": {
+                "imageUrl": "https://d2dom67l5t3ck7.cloudfront.net/demos/redcrosslogoUS.jpg"
+              },
+              "mediaSrc": {
+                "videoUrl": "https://d2dom67l5t3ck7.cloudfront.net/demos/AmericanRedCross15.mp4"
+              },
+              "brandUrl": "https://www.facebook.com/redcross/"
             }
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+The response contains the generated project ID (for example `2026-10_AB001`) and one `entryUrl` per subject group. Media URLs must be public HTTPS links: the API downloads them during validation and rejects the request if a file cannot be reached. Always send `subjectGroups`, even as an empty list `[]`.
+
+## Step 5 Send respondents
+
+Link respondents from your survey to the group's `entryUrl`, adding your respondent ID as `UserHash`:
+
+```
+https://schedule.incontext-research.com/scheduler/entry?ProjectID=2026-10_AB001&SubjectGroupID=fb-desktop&UserHash=RESPONDENT_ID
+```
+
+At the end of the study the respondent is sent back to your survey with `success`, `eligible` and other parameters. See [Sending respondents and survey integration](#sending-respondents-and-survey-integration).
+
+## Step 6 Fetch results
+
+```graphql
+query Results($projectId: CustomID!) {
+  project(id: $projectId) {
+    metrics(first: 50) {
+      totalCount
+      pageInfo { hasNextPage endCursor }
+      nodes {
+        subjectGroupId
+        taskId
+        subjectId
+        elements(first: 20) {
+          nodes {
+            id
+            type
+            metrics(first: 100) { nodes { name value } }
           }
         }
       }
@@ -206,483 +194,768 @@ Example ([view in explorer](https://portal.incontext-research.com/docs/explorer?
 }
 ```
 
-For all those types we export fitting graphql types in our schema though, so you know which contextType requires which fields ([explorer](https://portal.incontext-research.com/docs/explorer?query=%7B%0A++__type%28name%3A+%22ContextTaskDataFacebookNewsfeedStatic%22%29+%7B%0A++++fields+%7B%0A++++++name%0A++++++description%0A++++%7D%0A++%7D%0A%7D%0A&variables=)):
+```json
+{ "projectId": "2026-10_AB001" }
+```
+
+`subjectId` is the `UserHash` you passed in step 5, so you can join the results to your survey data. See [Query test results](#query-test-results).
+
+---
+
+# Concepts
+
+A **project** is one study. It contains one or more **subject groups** (often called cells): one test setup that a respondent is routed into. Each subject group has a device class (`desktop` or `mobile`) and an ordered list of **tasks**.
+
+| Task `type` | What the respondent does | Configured with |
+| --- | --- | --- |
+| `context` | Browses a realistic replica of a platform (Facebook, Instagram, TikTok, YouTube and others) that contains your ad | `contextType` and `data` |
+| `presenter` | Watches ads in a fixed presenter, for example a TV player | `presenterType` and `data` |
+| `setup` | Answers a short setup step, for example choosing topics of interest | `setupType` and `data` |
+| `survey` | Returns to your survey in the middle of the study and comes back afterwards | no further fields |
+
+Tasks can be combined in any order. A typical **task, survey, task** group exposes the respondent to the ad, returns them to your survey for intermediate questions, and then shows a second, guided exposure:
+
+```json
+{
+  "id": "fb-tst",
+  "device": "mobile",
+  "contextMode": "public",
+  "tasks": [
+    { "id": "exposure-1", "type": "context", "contextType": "facebookNewsfeedVideoAutoplay", "userGuidance": false, "...": "..." },
+    { "id": "mid-survey", "type": "survey" },
+    { "id": "exposure-2", "type": "context", "contextType": "facebookNewsfeedVideoAutoplay", "userGuidance": true, "...": "..." }
+  ]
+}
+```
+
+Key task settings:
+
+| Field | Meaning |
+| --- | --- |
+| `exposureDuration` | Seconds the respondent can be exposed to the context. The task ends when it runs out. |
+| `timeout` | Maximum task duration in seconds. If no exposure duration is set, the task ends after the timeout. |
+| `userGuidance` | Guides the respondent to the test ad: newsfeeds scroll to the ad and lock navigation, stories open the ad directly, YouTube ends the task after the pre-roll. |
+| `randomization` | Tasks with randomization enabled are shuffled among each other. |
+| `adName` | Ad name used in instructions, for example "Please now look for the {{name}} ad". |
+
+`contextMode` is always `public`: a replica that uses publicly available content and needs no browser extension, app or platform login. The value `personal` is no longer supported.
+
+---
+
+# Authentication
+
+Send your API secret in the `Authorization` header with the prefix `Secret`:
+
+```
+Authorization: Secret <your API secret>
+```
+
+## Roles
+
+`me { role }` tells you how the request was authenticated:
+
+| `role` | Meaning |
+| --- | --- |
+| `TEAM` | Authenticated with a team secret |
+| `ORGANIZATION` | Authenticated with an organization secret |
+| `USER`, `ADMIN` | Authenticated as a Portal user (for example in the explorer) |
+| `PUBLIC` | Not authenticated. Only `me` is available. |
+
+The schema you see depends on how you are authenticated, so introspect with the same credential your integration uses.
+
+## Team and organization secrets
+
+A team secret reads and creates projects of its team. An organization secret works across the organization's teams: `projects` and `projectCreate` accept optional `organizationId` and `teamId` arguments, and new projects go to the organization's default team when no team is given. Use `organization { id name }` and `organizationTeam { id name }` to look up the IDs.
+
+## Portal login in the explorer
+
+The explorer can send requests either with your Portal login or with an API secret that you paste in. Pick the credential in the dropdown next to the editor and test with the same kind of credential your integration will use.
+
+The older email and password token login (`/v4/auth`) is deprecated. Use API secrets for all integrations.
+
+---
+
+# Making requests
+
+Send a `POST` request with a JSON body to `https://api.incontext-research.com/v4/graphql`:
+
+```json
+{
+  "query": "query Project($id: CustomID!) { project(id: $id) { id description } }",
+  "variables": { "id": "2026-10_AB001" },
+  "operationName": "Project"
+}
+```
+
+The root operations are:
+
+| Operation | Purpose |
+| --- | --- |
+| `me` | Current identity and role |
+| `organization`, `organizationTeam` | Your organization and team |
+| `project(id)` | One project, including its groups, tasks, metrics and timelines |
+| `projects(first, last, after, before, organizationId, teamId)` | All projects you can access, oldest first |
+| `search(type: PROJECT, query, first, ...)` | Text search across your projects |
+| `subjectGroupTemplate(contextType, taskSequence)` | Default group setup and supported devices for a format |
+| `settings` | Organization defaults, for example success parameters |
+| `plugins`, `plugin`, `pluginInstallations`, `pluginInstallation` | Available and installed plugins |
+| `projectCreate(data, organizationId, teamId)` | Create a project (mutation) |
+| `projectUpdate(id, data)` | Update a project (mutation) |
+
+There are no subscriptions, and the API does not upload media: host images and videos yourself at public HTTPS URLs.
+
+## Updating a project
+
+`projectUpdate` takes a full `ProjectInput`. Read the project first, change what you need, and send back `description`, `language` and the complete `subjectGroups` list: the groups you send replace the existing ones. Read-only fields that appear in query results (for example `entryUrl`, or the `width` and `height` of images) are not accepted as input, so remove them before sending.
+
+---
+
+# Pagination
+
+Lists use the [GraphQL connection model](https://graphql.org/learn/pagination/#complete-connection-model). They take four arguments:
+
+| Argument | Meaning |
+| --- | --- |
+| `first: Int` | The first n entries, or the first n after the `after` cursor |
+| `last: Int` | The last n entries, or the last n before the `before` cursor |
+| `after: Cursor` | Start after this cursor |
+| `before: Cursor` | End before this cursor |
+
+Rules:
+
+- Always pass `first` or `last` on `projects`, `search`, `metrics` and `timelines`. Without one, the request fails with an internal server error.
+- Use either `first` or `last`, not both, and either `after` or `before`, not both.
+- The limit must be a positive integer. Keep pages small (for example 50 to 100) and page with cursors instead of requesting everything at once.
+- `projects` is ordered oldest first, so `projects(last: 10)` returns your ten newest projects.
+- Nested lists of a single project, such as `subjectGroups` and `tasks`, can be read without arguments.
+
+Every connection returns `pageInfo`, `totalCount`, `nodes` and `edges`:
+
+```graphql
+{
+  projects(last: 2) {
+    pageInfo {
+      startCursor      # cursor of the first returned entry
+      endCursor        # cursor of the last returned entry
+      hasNextPage      # more entries after endCursor
+      hasPreviousPage  # more entries before startCursor
+    }
+    totalCount         # number of entries in the whole list
+    nodes { id description createdAt }
+    edges { cursor node { id } }
+  }
+}
+```
+
+To walk through a long list, repeat the query with `after: <endCursor>` while `hasNextPage` is `true`:
+
+```graphql
+query Page($after: Cursor) {
+  projects(first: 50, after: $after) {
+    pageInfo { hasNextPage endCursor }
+    nodes { id description }
+  }
+}
+```
+
+---
+
+# Errors
+
+GraphQL errors are returned with HTTP status `200` in the `errors` array of the response, next to any `data` that could still be resolved. Always check `errors` before using `data`.
+
+Each error has a `type`, a `message` and a nested list of `errors`, each with an `origin`: the path to the field that caused it. A string in the path is a property name and a number is a list index.
+
+```json
+{
+  "errors": [
+    {
+      "type": "InvalidDataError",
+      "message": "Invalid data",
+      "errors": [
+        {
+          "message": "invalid video url - format has to be .mp4",
+          "origin": ["subjectGroups", 0, "tasks", 0, "data", "mediaSrc"]
+        },
+        {
+          "message": "invalid image url - cannot access image under https://example.com/logo.jpg",
+          "origin": ["subjectGroups", 0, "tasks", 0, "data", "logoSrc"]
+        }
+      ]
+    }
+  ],
+  "data": { "projectCreate": null }
+}
+```
+
+The first origin above points to `data.subjectGroups[0].tasks[0].data.mediaSrc`. All validation problems of a request are reported together.
+
+| `type` | Cause | What to do |
+| --- | --- | --- |
+| `InvalidDataError` | The project input failed validation, for example an unreachable media URL or a device the format does not support | Fix the fields named in `origin` and resend |
+| `GraphQLError` | The query does not match the schema, for example an unknown field or a wrong enum value | Check the query against the schema in the explorer |
+| `ClientError` | The request was understood but cannot be carried out, for example missing permissions | Check the credential and the IDs |
+| `InternalServerError` | Unexpected server error. The message contains an error ID. | Retry once. If it persists, send the error ID to support. |
+
+A project that does not exist, or that your credential cannot access, is returned as `null` without an error.
+
+A create or update rejected with `InvalidDataError` or `GraphQLError` saves nothing. After a timeout or an internal server error on a mutation, query the project (or `projects(last: 5)`) before retrying, so that you do not create a duplicate.
+
+---
+
+# Task data and format discovery
+
+The `data` field of a task is a JSON object whose shape depends on the `contextType` (or `presenterType` and `setupType`). Because it is JSON, the explorer cannot autocomplete inside it and may show a false "Expected value of type JSON" warning. You can ignore that warning: the server validates `data` and reports real problems in the response.
+
+Each format's data is described by a schema type named `ContextTaskData` plus the format name with a capital first letter, for example `ContextTaskDataFacebookNewsfeedStatic` for `facebookNewsfeedStatic`. The enums `CONTEXT_TASK_DATA_TYPES`, `PRESENTER_TASK_DATA_TYPES` and `SETUP_TASK_DATA_TYPES` list all of them.
 
 ```graphql
 {
   __type(name: "ContextTaskDataFacebookNewsfeedStatic") {
-    fields {
-      name
-      description
+    fields { name description type { kind name ofType { name } } }
+  }
+}
+```
+
+Media rules that apply to most formats:
+
+- Images: `{ "imageUrl": "https://..." }`, `.jpg` or `.png`.
+- Videos: `{ "videoUrl": "https://..." }`, `.mp4`.
+- URLs must use HTTPS and be publicly reachable when you create or update the project.
+- Query results add read-only fields such as `width`, `height` or `length`. Remove them before reusing a task as input.
+
+Not every format supports both devices. Check `subjectGroupTemplate(...) { devices }` before creating a group: a mismatch is rejected with `given device is not supported for given task`.
+
+---
+
+# Project reference
+
+The tables below summarize the input types. The schema in the explorer holds the complete, current definitions and descriptions.
+
+## ProjectInput
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| `description` | `String!` | Client, project and contact information. Used for billing. |
+| `language` | `LANGUAGES!` | Language of instructions and platform UI, for example `en_US`. See [supported languages](https://e2.ms/local). |
+| `billingReference` | `String` | Job, project or PO number for billing |
+| `allowReentry` | `Boolean` | Lets respondents reopen an unfinished session with the same entry URL within two hours. They restart the task they left. |
+| `deploymentFilters` | `DeploymentFilterInput` | Allowed operating systems and browsers. See [Deployment filters](#deployment-filters). |
+| `subjectGroups` | `[SubjectGroupInput]` | The groups of the project. Always send it, as `[]` if empty. |
+
+Project IDs are generated when you create a project. You cannot choose them.
+
+## SubjectGroupInput
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| `id` | `CustomID` | Group ID, unique within the project. Used in entry URLs and results. |
+| `device` | `desktop` or `mobile` | Device class. Mobile covers smartphones and tablets. |
+| `contextMode` | `public` | Always `public` |
+| `tasks` | `[TaskInput]` | Ordered list of tasks |
+| `returnUrl` | `String` | Template for a custom return URL. See [Custom return URL](#custom-return-url). |
+| `deploymentFilters` | `DeploymentFilterInput` | Overrides the project's deployment filters for this group |
+| `plugins` | `[SubjectGroupPluginSetupInput]` | Plugins to run in this group (`name` and `options`) |
+
+## TaskInput
+
+| Field | Type | Used by | Notes |
+| --- | --- | --- | --- |
+| `id` | `CustomID` | all | Task ID, unique within the group. Used in results. |
+| `type` | `TASK_TYPES` | all | `context`, `presenter`, `setup` or `survey` |
+| `contextType` | `CONTEXT_TASK_TYPES` | context | See [Supported context types](#supported-context-types) |
+| `presenterType` | `PRESENTER_TASK_TYPES` | presenter | `tvPlayer` or `onlineSlideshow` |
+| `setupType` | `SETUP_TASK_TYPES` | setup | `topicSelection` |
+| `data` | `JSON` | context, presenter, setup | Format-specific data |
+| `exposureDuration` | `Duration` (seconds) | context | Exposure time |
+| `timeout` | `Duration` (seconds) | context, presenter, setup | Maximum task duration |
+| `userGuidance` | `Boolean` | context | Guide the respondent to the ad |
+| `adName` | `String` | context | Ad name used in instructions |
+| `randomization` | `Boolean` | context, presenter | Shuffle with other randomized tasks |
+| `instructions` | `TaskInstructionInput` | context, presenter, setup | See [Instructions](#instructions) |
+| `successParameters` | `ContextTaskSuccessParametersInput` | context, presenter | See [Success evaluation](#success-evaluation) |
+| `taskEndButton` | `TaskEndButtonInput` | context, presenter | Button that lets respondents end the task early |
+| `eyeTracking` | `TaskEyeTrackingInput` | context, presenter | Webcam eye tracking with a calibration step |
+| `emotionTracking` | `TaskEmotionTrackingInput` | context, presenter | Facial emotion tracking |
+| `tracking` | `TaskTrackingInput` | context, presenter | Additional timelines to record |
+
+---
+
+# Supported context types
+
+Use these values as `contextType`. Formats marked "control" show the platform without any test ad, for control groups. For X, the API identifiers keep their original `twitter` prefix.
+
+| Platform | `contextType` | Format |
+| --- | --- | --- |
+| Facebook | `facebookControl` | Facebook control: Facebook context without any ad. |
+| Facebook | `facebookMultiple` | Facebook multi ad setup: Injects multiple ads into the Facebook newsfeed. |
+| Facebook | `facebookNewsfeedCarousel` | Facebook feed carousel ad: Injects a carousel ad into the Facebook newsfeed. |
+| Facebook | `facebookNewsfeedMidroll` | Facebook feed mid roll ad: Injects a content video together with a mid roll ad into the Facebook newsfeed. |
+| Facebook | `facebookNewsfeedStatic` | Facebook feed image ad: Injects a static image ad into the Facebook newsfeed. |
+| Facebook | `facebookNewsfeedVideoAutoplay` | Facebook feed video ad: Injects a video ad into the Facebook newsfeed. |
+| Facebook | `facebookStoriesCarousel` | Facebook stories carousel ad: Injects a carousel (up to three combined ads) ad into Facebook stories. |
+| Facebook | `facebookStoriesContent` | Facebook stories content: Injects a content post into Facebook stories. |
+| Facebook | `facebookStoriesStatic` | Facebook stories image ad: Injects a static image ad into the Facebook stories. |
+| Facebook | `facebookStoriesVideo` | Facebook stories video ad: Injects a video ad into the Facebook stories. |
+| Instagram | `instagramControl` | Instagram control: Instagram context without any ad. |
+| Instagram | `instagramMultiple` | Instagram multi ad setup: Injects multiple ads into the Instagram newsfeed. |
+| Instagram | `instagramNewsfeedCarousel` | Instagram feed carousel ad: Injects a carousel ad into the Instagram newsfeed. |
+| Instagram | `instagramNewsfeedStatic` | Instagram feed image ad: Injects a static image into the Instagram newsfeed. |
+| Instagram | `instagramNewsfeedVideoAutoplay` | Instagram feed video ad: Injects a video into the Instagram newsfeed. |
+| Instagram | `instagramReelsInfeedVideo` | Instagram reels infeed video ad: Injects a video ad into Instagram reels. |
+| Instagram | `instagramStoriesCarousel` | Instagram stories carousel ad: Injects a carousel (up to three combined ads) ad into Instagram stories. |
+| Instagram | `instagramStoriesContent` | Instagram stories content: Injects a content post into Instagram stories. |
+| Instagram | `instagramStoriesStatic` | Instagram stories image ad: Injects a static image ad into the Instagram stories. |
+| Instagram | `instagramStoriesVideo` | Instagram stories video ad: Injects a video ad into the Instagram stories. |
+| LinkedIn | `linkedinControl` | LinkedIn control: LinkedIn context without any ad. |
+| LinkedIn | `linkedinNewsfeedCarousel` | LinkedIn feed carousel ad: Injects a carousel ad into the LinkedIn newsfeed. |
+| LinkedIn | `linkedinNewsfeedStatic` | LinkedIn feed image ad: Injects a static image ad into the LinkedIn newsfeed. |
+| LinkedIn | `linkedinNewsfeedVideo` | LinkedIn feed video ad: Injects a video ad into the LinkedIn newsfeed. |
+| Snapchat | `snapchatCarousel` | Snapchat discovery carousel ad: Injects a carousel (up to three combined ads) ad into Snapchat stories. |
+| Snapchat | `snapchatInlineStatic` | Snapchat discovery inline image ad: Injects a static image ad into the currently viewed Snapchat story. |
+| Snapchat | `snapchatInlineVideo` | Snapchat discovery inline video ad: Injects a video ad into the currently viewed Snapchat story. |
+| Snapchat | `snapchatMultiple` | Snapchat multi ad setup: Injects multiple ads into the Snapchat feed. |
+| Snapchat | `snapchatSpotlightInfeedVideo` | Snapchat spotlight infeed video ad: Injects a video ad into the Snapchat spotlight feed. |
+| Snapchat | `snapchatStatic` | Snapchat discovery image ad: Injects a static image ad into the Snapchat stories. |
+| Snapchat | `snapchatVideo` | Snapchat discovery video ad: Injects a video ad into the Snapchat stories. |
+| TikTok | `tiktokBrandTakeoverStatic` | TikTok brand takeover static: Displays an image in fullscreen mode before showing a TikTok feed. |
+| TikTok | `tiktokBrandTakeoverVideo` | TikTok brand takeover video: Displays a video in fullscreen mode before showing a TikTok feed. |
+| TikTok | `tiktokControl` | TikTok control: TikTok context without any ad. |
+| TikTok | `tiktokInfeedVideo` | TikTok infeed video: Injects a video ad into a TikTok feed. |
+| TikTok | `tiktokMultiple` | TikTok multi ad setup: Injects multiple ads into the TikTok feed. |
+| TikTok | `tiktokTopviewVideo` | TikTok topview video: Injects a video ad at the top of a TikTok feed. |
+| X | `twitterControl` | X control: X context without any ad. |
+| X | `twitterNewsfeedStatic` | X feed image ad: Injects a static image into the X newsfeed. |
+| X | `twitterNewsfeedVideoAutoplay` | X feed video ad: Injects a video into the X newsfeed. |
+| YouTube | `youtubeContent` | YouTube content ad: Displays a thumbnail between suggested videos on the homepage, which opens a tracked content video. |
+| YouTube | `youtubeControl` | YouTube control: Shows the YouTube context without any ad. |
+| YouTube | `youtubeMultiple` | YouTube multi ad setup: Displays multiple ads before YouTube videos. |
+| YouTube | `youtubePods` | YouTube pods: Displays a pod before a YouTube video. |
+| YouTube | `youtubePreroll` | YouTube preroll ad: Displays a preroll ad before a YouTube video. |
+| YouTube | `youtubeShortsContent` | YouTube shorts content ad: Injects a content video into the YouTube shorts feed. |
+| YouTube | `youtubeShortsInfeed` | YouTube shorts infeed ad: Injects a video ad into YouTube shorts feed. |
+| Youku | `youkuControl` | Youku control: Shows the Youku context without any ad. |
+| Youku | `youkuPreroll` | Youku preroll ad: Displays a preroll ad before a Youku video. |
+| News site | `newsControl` | News control: Displays a generic news website. |
+| News site | `newsMultiple` | News multiple: Displays a generic news website with one or multiple ads. |
+| Websites | `websitesControl` | Websites control: Displays a static website without any ads. |
+| Websites | `websitesHomepageStatic` | Websites homepage image ad: Injects an image into a static website. |
+| Websites | `websitesHomepageVideo` | Websites homepage video ad: Injects a video into a static website. |
+| Websites | `websitesMultiple` | Websites multiple: Displays a static website with one or multiple ads. |
+| E-commerce | `ecommerceStoreMultiple` | E-commerce store: Injects products into a replica online store. |
+| Slides | `slides` | Slides: Sequence of images or videos. |
+| Page builder | `builderMultiple` | Page builder: Runs one or more custom pages. |
+
+Format details and examples: [supported ad formats](https://incontext-research.com/docs/adsupport/). The live list is always available through `__type(name: "CONTEXT_TASK_TYPES")`.
+
+---
+
+# Presenter and setup tasks
+
+## TV player
+
+`presenterType: tvPlayer` shows ads in a TV environment. The setup is a list of **blocks** that play in order: content blocks and ad blocks. A content block ends when its first video ends, and an ad block ends after its last ad was seen or skipped. The next block starts right away. Content blocks can offer up to nine channels that respondents switch ("zap") between. Without zapping, only one channel is allowed.
+
+Options (`data.options`): `allowSkip` (skip a whole block with the "s" key or a swipe down), `zappingWithSpacebar` (desktop) and `zappingWithTap` (mobile). See `PresenterTaskDataTvPlayer` in the schema for all fields.
+
+![tv flow](https://portal.incontext-research.com/images/docs/tv-flow.jpg)
+
+TV player behavior is recorded as [timelines](#timelines).
+
+## Online slideshow
+
+`presenterType: onlineSlideshow` is a legacy image and video sequence. For new studies use the `slides` context type, which covers the same use case.
+
+## Topic selection
+
+`type: setup` with `setupType: topicSelection` asks respondents to pick topics they are interested in, for example before a feed. See `SetupTaskDataTopicSelection` in the schema.
+
+---
+
+# Instructions
+
+Context, presenter and setup tasks can show instructions before (`pre`) and after (`post`) the task. Each instruction has two required fields:
+
+- `html`: the instruction text, HTML formatted
+- `button`: the label of the continue button
+
+Defaults:
+
+- If `instructions` is not set, default instructions in the project language are used: pre instructions for every task, and post instructions after the last task.
+- If `instructions` is an empty object `{}`, no instructions are shown.
+
+Placeholders in pre instructions are replaced at runtime:
+
+| Placeholder | Replaced with |
+| --- | --- |
+| `{{duration}}` | `exposureDuration` of a context task, or `timeout` of a presenter task |
+| `{{name}}` | `adName` of a context task |
+| `{{context}}` | The context of a context task |
+
+Custom pre instructions and no post instructions:
+
+```json
+"instructions": {
+  "pre": {
+    "html": "You will now see a Facebook newsfeed.<br/>Please browse it for the next {{duration}} seconds as you normally would.",
+    "button": "Continue"
+  }
+}
+```
+
+![custom instructions](https://portal.incontext-research.com/images/docs/fb-newsfeed-instructions.png)
+
+Three tasks with no instructions, custom instructions and default instructions:
+
+```json
+[
+  { "id": "task-1", "instructions": {} },
+  {
+    "id": "task-2",
+    "instructions": {
+      "pre": { "html": "Please browse the feed for {{duration}} seconds.", "button": "Continue" },
+      "post": { "html": "Thank you.", "button": "Continue" }
+    }
+  },
+  { "id": "task-3" }
+]
+```
+
+---
+
+# Deployment filters
+
+By default a study accepts the operating systems and browsers listed in the [system requirements](https://incontext-research.com/docs/requirements/). `deploymentFilters` replaces that list on the project or on a single subject group (the group setting wins).
+
+- `os`: list of `{ "name": ..., "min": ... }`
+- `browsers`: list of `{ "name": ..., "min": ... }`
+- `min` is optional. Without it, every version is allowed.
+- Names are case-insensitive and follow [ua-parser-js](https://github.com/faisalman/ua-parser-js), for example `windows`, `mac os`, `linux`, `chrome`, `firefox`, `edge`.
+
+Windows 10 or newer and any Linux, with any browser:
+
+```json
+"deploymentFilters": {
+  "os": [
+    { "name": "windows", "min": "10" },
+    { "name": "linux" }
+  ]
+}
+```
+
+macOS 10.15 or newer with Chrome or Firefox 100 or newer:
+
+```json
+"deploymentFilters": {
+  "os": [{ "name": "mac os", "min": "10.15" }],
+  "browsers": [
+    { "name": "chrome", "min": "100" },
+    { "name": "firefox", "min": "100" }
+  ]
+}
+```
+
+Respondents who do not match are returned to your survey with `eligible=0`.
+
+---
+
+# Sending respondents and survey integration
+
+## Entry URL
+
+Send respondents to the group's `entryUrl` from the API. It has this form:
+
+```
+https://schedule.incontext-research.com/scheduler/entry?ProjectID=<project id>&SubjectGroupID=<group id>
+```
+
+| Parameter | Required | Meaning |
+| --- | --- | --- |
+| `ProjectID` | yes | Project ID |
+| `SubjectGroupID` | yes | Group ID |
+| `UserHash` | recommended | Your respondent ID. It becomes the `subjectId` in the results. It must be unique per project; a respondent who comes back with a used `UserHash` sees a "session expired" page, unless re-entry applies (see below). Without it, an ID is generated. |
+| `origin` | optional | Base URL of the return link. Without it, the HTTP referrer of the entry request is used. |
+| `SessionID` | for resuming | Resumes an existing session, for example after an intermediate survey. The other parameters can then be omitted. |
+| any other parameter | optional | Passed back unchanged on the return URL |
+
+URL-encode all values.
+
+## Return URL parameters
+
+When the respondent reaches a `survey` task or the end of the study, they are sent back to `origin` (or the referrer) with these query parameters, followed by all extra parameters you passed in:
+
+| Parameter | Values | Meaning |
+| --- | --- | --- |
+| `success` | `0` or `1` | Whether the respondent met the [success criteria](#success-evaluation). While the study is still in progress (`sessionFinished=0`) it is provisionally `1`. |
+| `eligible` | `0` or `1` | Whether the respondent's device and browser met the requirements and the study could run |
+| `sessionFinished` | `0` or `1` | `1` when the whole study is finished. `0` on an intermediate return. |
+| `SessionID` | string | Session identifier. Store it to resume the session. |
+| `previousTask` | task ID | The task before the return |
+
+Use `success` for quality filtering only when `sessionFinished=1`.
+
+## Task survey task flow
+
+A `survey` task returns the respondent to your survey in the middle of the study (`sessionFinished=0`). To continue, send them back to:
+
+```
+https://schedule.incontext-research.com/scheduler/entry?SessionID=<SessionID from the return URL>
+```
+
+Survey programming details: [survey integration](https://incontext-research.com/docs/surveyintegration/).
+
+## Re-entry
+
+With `allowReentry: true` on the project, a respondent who calls the same entry URL again can continue an unfinished session within two hours of its start. They restart the task they left, and progress within that task is lost. Otherwise, or when the session is finished or older than two hours, they see the "session expired" page.
+
+## Custom return URL
+
+`returnUrl` on a subject group replaces the default return URL with a [Handlebars](https://handlebarsjs.com/guide/) template. Use triple braces so that the URL is not HTML-escaped. Available values include `returnUrl` (the default return URL with all parameters above), `eligible`, `session`, `group` and `task`.
+
+Append a fixed parameter to the default return URL:
+
+```json
+"returnUrl": "{{{returnUrl}}}&cell=fb-desktop"
+```
+
+If the template cannot be rendered, the default return URL is used with an added `returnUrlError` parameter that describes the problem.
+
+---
+
+# Success evaluation
+
+After a task, the recorded metrics are compared with the task's **success parameters**. The result is returned to your survey as `success`.
+
+## Success parameters
+
+| Field | Type | Passes when |
+| --- | --- | --- |
+| `visible` | `Int` (ms) | The element was visible for longer than this many milliseconds (`visibility_Duration`). `1` means "was visible at all". |
+| `played` | `Int` (ms) | The video played for longer than this many milliseconds (`playback_Duration`) |
+| `percentPlayed` | `0` to `100` | The video played for more than this share of the task's main video length |
+| `loaded` | `Boolean` | The element was loaded (`loaded_Time` is set) |
+| `elements` | list | Separate conditions per tracked element. See below. |
+| `matchBehavior` | `ANY` or `ALL` | How several matching elements are combined. See below. |
+| `min` | `Int` | Minimum number of matching elements. Default `1`. |
+
+Without `elements`, the conditions apply to every tracked element of the task. With `elements`, each entry is evaluated on its own, using only the fields inside that entry. Put `matchBehavior` and `min` inside each element in that case: top-level fields are ignored when `elements` is set.
+
+Each element entry selects tracked elements with `id` and `type` patterns. Patterns are globs: `*` matches any characters, for example `story-*` or `post-0`. Element IDs and types appear in the [metrics results](#metrics).
+
+`matchBehavior`:
+
+| Value | Passes when |
+| --- | --- |
+| not set | At least `min` elements match, and every matching element meets the condition |
+| `ANY` | At least `min` matching elements meet the condition. Others may fail. |
+| `ALL` | Every element the setup expects was tracked, and all of them meet the condition |
+
+If no element matching an entry was recorded, the task does not pass. Empty success parameters (`{}`) switch the success check off. Basic plausibility checks on the recorded data still apply to every task and can mark it unsuccessful.
+
+At least one of several ads watched for more than one second:
+
+```json
+"successParameters": {
+  "elements": [
+    { "id": "*", "played": 1000, "matchBehavior": "ANY", "min": 1 }
+  ]
+}
+```
+
+The first story was visible:
+
+```json
+"successParameters": {
+  "elements": [{ "id": "story-0", "visible": 1 }]
+}
+```
+
+## Defaults
+
+When a task has no `successParameters`, the organization default for its format is used, depending on whether user guidance is enabled. Parameters set on a task replace the default completely; they are not merged with it. Your organization's current defaults are returned by `settings { successParameters }`, keyed by format name in kebab case (for example `facebook-newsfeed-static`) with `ug` (guided) and `noUg` (not guided) entries.
+
+Platform defaults:
+
+| `contextType` | With user guidance | Without user guidance |
+| --- | --- | --- |
+| `facebookMultiple` | `{"loaded":true}` | `{"loaded":true}` |
+| `facebookNewsfeedCarousel` | `{"elements":[{"id":"carousel-container","visible":1}]}` | `{"elements":[{"id":"carousel-container","visible":1}]}` |
+| `facebookNewsfeedMidroll` | `{"elements":[{"id":"midroll-*-item-0","percentPlayed":90}]}` | `{"elements":[{"id":"post-*","visible":1}]}` |
+| `facebookNewsfeedStatic` | `{"visible":1}` | `{"visible":1}` |
+| `facebookNewsfeedVideoAutoplay` | `{"percentPlayed":90}` | `{"visible":1}` |
+| `facebookStoriesCarousel` | `{"elements":[{"id":"story-0","visible":1}]}` | `{"elements":[{"id":"story-0","visible":1}]}` |
+| `facebookStoriesContent` | `{"elements":[{"id":"story-0","visible":1}]}` | `{"elements":[{"id":"story-0","visible":1}]}` |
+| `facebookStoriesStatic` | `{"elements":[{"id":"story-0","visible":1}]}` | `{"elements":[{"id":"story-0","visible":1}]}` |
+| `facebookStoriesVideo` | `{"elements":[{"id":"story-0","visible":1}]}` | `{"elements":[{"id":"story-0","visible":1}]}` |
+| `instagramMultiple` | `{"loaded":true}` | `{"loaded":true}` |
+| `instagramNewsfeedCarousel` | `{"elements":[{"id":"carousel-container","visible":1}]}` | `{"elements":[{"id":"carousel-container","visible":1}]}` |
+| `instagramNewsfeedStatic` | `{"visible":1}` | `{"visible":1}` |
+| `instagramNewsfeedVideoAutoplay` | `{"percentPlayed":90}` | `{"visible":1}` |
+| `instagramReelsInfeedVideo` | `{"percentPlayed":90}` | `{"visible":1}` |
+| `instagramStoriesCarousel` | `{"elements":[{"id":"story-0","visible":1}]}` | `{"elements":[{"id":"story-0","visible":1}]}` |
+| `instagramStoriesContent` | `{"elements":[{"id":"story-0","visible":1}]}` | `{"elements":[{"id":"story-0","visible":1}]}` |
+| `instagramStoriesStatic` | `{"elements":[{"id":"story-0","visible":1}]}` | `{"elements":[{"id":"story-0","visible":1}]}` |
+| `instagramStoriesVideo` | `{"elements":[{"id":"story-0","visible":1}]}` | `{"elements":[{"id":"story-0","visible":1}]}` |
+| `linkedinNewsfeedCarousel` | `{"elements":[{"id":"carousel-container","visible":1}]}` | `{"elements":[{"id":"carousel-container","visible":1}]}` |
+| `linkedinNewsfeedStatic` | `{"visible":1}` | `{"visible":1}` |
+| `linkedinNewsfeedVideo` | `{"percentPlayed":90}` | `{"visible":1}` |
+| `newsMultiple` | `{"loaded":true}` | `{"loaded":true}` |
+| `snapchatCarousel` | `{"elements":[{"id":"story-0","visible":1}]}` | `{"elements":[{"id":"story-0","visible":1}]}` |
+| `snapchatInlineStatic` | `{"visible":1}` | `{"visible":1}` |
+| `snapchatInlineVideo` | `{"visible":1}` | `{"visible":1}` |
+| `snapchatMultiple` | `{"loaded":true}` | `{"loaded":true}` |
+| `snapchatSpotlightInfeedVideo` | `{"percentPlayed":90}` | `{"visible":1}` |
+| `snapchatStatic` | `{"elements":[{"id":"story-0","visible":1}]}` | `{"elements":[{"id":"story-0","visible":1}]}` |
+| `snapchatVideo` | `{"elements":[{"id":"story-0","visible":1}]}` | `{"elements":[{"id":"story-0","visible":1}]}` |
+| `tiktokBrandTakeoverStatic` | `{"elements":[{"id":"tiktok-post","visible":1}]}` | `{"elements":[{"id":"tiktok-post","visible":1}]}` |
+| `tiktokBrandTakeoverVideo` | `{"elements":[{"id":"tiktok-post","percentPlayed":90}]}` | `{"elements":[{"id":"tiktok-post","visible":1}]}` |
+| `tiktokInfeedVideo` | `{"elements":[{"id":"tiktok-post","percentPlayed":90}]}` | `{"elements":[{"id":"tiktok-post","visible":1}]}` |
+| `tiktokMultiple` | `{"loaded":true}` | `{"loaded":true}` |
+| `tiktokTopviewVideo` | `{"elements":[{"id":"tiktok-post","percentPlayed":90}]}` | `{"elements":[{"id":"tiktok-post","visible":1}]}` |
+| `twitterNewsfeedStatic` | `{"visible":1}` | `{"visible":1}` |
+| `twitterNewsfeedVideoAutoplay` | `{"percentPlayed":90}` | `{"visible":1}` |
+| `websitesHomepageStatic` | `{"visible":1}` | `{"visible":1}` |
+| `websitesHomepageVideo` | `{"visible":1}` | `{"visible":1}` |
+| `websitesMultiple` | `{"loaded":true}` | `{"loaded":true}` |
+| `youkuPreroll` | `{"visible":1}` | `{"visible":1}` |
+| `youtubeContent` | `{"loaded":true}` | `{"loaded":true}` |
+| `youtubeMultiple` | `{"loaded":true}` | `{"loaded":true}` |
+| `youtubePods` | `{"played":5000}` | `{"visible":1}` |
+| `youtubePreroll` | `{"played":5000}` | `{"visible":1}` |
+| `youtubeShortsContent` | `{"percentPlayed":90}` | `{"visible":1}` |
+| `youtubeShortsInfeed` | `{"percentPlayed":90}` | `{"visible":1}` |
+
+Control formats, `slides`, `builderMultiple`, `ecommerceStoreMultiple` and the presenter types have no default success parameters, so only the plausibility checks apply unless you set your own.
+
+---
+
+# Query test results
+
+Metrics and timelines are fields of a project. Both accept the same filters, which can be combined:
+
+| Argument | Meaning |
+| --- | --- |
+| `subjectGroup: CustomID` | Only this group |
+| `task: CustomID` | Only this task ID. Task IDs can repeat across groups, so combine it with `subjectGroup`. |
+| `subject: String` | Only this respondent (`UserHash`) |
+
+```graphql
+{
+  project(id: "2026-10_AB001") {
+    metrics(first: 10, subjectGroup: "fb-desktop", task: "exposure", subject: "RESPONDENT_ID") {
+      nodes { subjectGroupId taskId subjectId }
+    }
+    timelines(first: 10, subjectGroup: "fb-desktop", task: "exposure", subject: "RESPONDENT_ID") {
+      nodes { subjectGroupId taskId subjectId }
     }
   }
 }
 ```
 
-## Error responses
+## Metrics
 
-The project model is very versatile and it's easy to make mistakes. We try to validate every possible value/combination to prevent the creation of wrongly configured projects. Additionally we try to point you to the right places if an error occurs.
-
-To do so, we return a custom Error format. It contains the original Error Message, some default graphql fields (locations and path) as well as an origin.
-
-The origin contains the route to the error in form of an array. If the entry is a string, it's an object property, if it's an integer it's a field index of a list.
-
-An Example:
+A metric set holds the metrics of one respondent in one task. It contains **elements**: the tracked parts of the setup, usually the test ad and its parts (for example a carousel container and its items). Each element has an `id`, a `type` and a list of metrics with `name`, `value` and `timestamp`.
 
 ```json
 {
-  "message": "invalid data at subjectGroups.0.tasks.0.data.mediaSrc - invalid video url",
-  "origin": ["subjectGroups", 0, "tasks", 0, "data", "mediaSrc"]
+  "subjectGroupId": "fb-desktop",
+  "taskId": "exposure",
+  "subjectId": "RESPONDENT_ID",
+  "elements": {
+    "nodes": [
+      {
+        "id": "carousel-container",
+        "type": "facebook-post-carousel",
+        "metrics": {
+          "nodes": [
+            { "name": "loaded_Time", "value": "1326", "timestamp": "1791993361701" },
+            { "name": "visibility_Duration", "value": "7001", "timestamp": "1791993363872" },
+            { "name": "actionUrl_ClickTime", "value": null, "timestamp": null }
+          ]
+        }
+      }
+    ]
+  }
 }
 ```
 
-Translated into a javascript path this would look like:
+- `value` is always a string, or `null` if the event did not happen. Convert it to a number yourself.
+- `*_Duration` values are durations and `*_Time` values are points in time since the start of the recording, both in milliseconds. `timestamp` is the Unix time in milliseconds when the metric was first recorded.
+- Every element type returns a fixed set of metric names. Metrics that were not recorded are `null`.
+- The metrics available per format are listed in the [API metrics overview](https://e2.ms/apimetrics).
 
-`project.subjectGroups[0].tasks[0].data.mediaSrc`
+## Timelines
 
-Meaning, the mediaSrc of the specified task is invalid.
+A timeline is a sequence of timestamped events of one respondent in one task, for example scroll positions, visible areas or interactions. The available timelines are the fields of `TimelineList` in the schema (for example `StimulusSequence`, `StimulusSequenceHost`, `Interact`, `Scroll`, `VisibleRect`, `CustomEvent`). Each one is a paginated list. Request only the timelines and fields you need, and use small pages.
 
-# Project model
-
-The most important parts of the eye-square api are projects. A project is a set of test setups. A test setup is called a Subject Group. Each Subject Group contains a list of routines called Tasks. Each task presents a different part of a setup. There are different kind of tasks:
-
-- ContextTask: a subject is shown an ad inside of a context (for example facebook) and behaviour is measured.
-- SurveyTask: an external survey is shown, usually only needed between other tasks.
-- PresenterTask: a subject is shown different ads in a choosen presenter (TV, Online Slideshow, ...)
-
-Tasks can be combined in any order. For example:
-
-```jsonc
- "project": {
-   "id": "2025-01_ES001",
-   "subjectGroups": [{
-     "id": "first group",
-     "tasks": [
-       {
-         "type": "context",
-         "contextType": "facebookNewsfeedVideoAutoplay"
-         // ...
-       },
-       {
-         "type": "survey"
-       },
-       {
-         type: "presenter",
-         persenterType: "tvPlayer"
-         // ...
-       }
-     ],
-     // ...
-   }],
-   // ...
- }
+```graphql
+{
+  project(id: "2026-10_AB001") {
+    timelines(first: 10) {
+      nodes {
+        subjectGroupId
+        taskId
+        subjectId
+        timelines {
+          StimulusSequenceHost(first: 10) { nodes { Timestamp StimulusID } }
+          Interact(first: 100) { nodes { Timestamp Value EventType } }
+        }
+      }
+    }
+  }
+}
 ```
 
-This project contains only one subject group. This group contains three tasks, one for each type.
+TV player tasks record these timelines:
 
-When a subject would enter this test setup it would first get shown a video ad on facebook. Afterwards it would get sent to an external survey. When done with the survey the last task would show a TV-setup.
-
-![task flow](https://portal.incontext-research.com/images/docs/task-flow.jpg)
-
-You find a lot of example project setups in the Explorer, just choose one in the Examples dropdown.
-
-## Context tasks
-
-A context task shows an ad in a defined context (Facebook for example) and measures behaviour. A context tasks has different phases, most of them optional:
-
-- pre instructions (optional, see further below): some instructions that are shown before the task really starts
-- context browsing: the subject is directed to the choosen context and is shown an ad, only required step of a context task.
-- post instructions (optional, see further below): instructions a subject sees after the context task.
-
-![context task flow](https://portal.incontext-research.com/images/docs/context-task-flow.jpg)
-
-### Supported context types
-
-The following types are currently API supported:
-
-[view in explorer](https://portal.incontext-research.com/docs/explorer?query=%7B%0A++__type%28name%3A+%22CONTEXT_TASK_TYPES%22%29+%7B%0A++++enumValues+%7B%0A++++++name%0A++++++description%0A++++%7D%0A++%7D%0A%7D%0A&variables=)
-
-Additional information about the ad formats can be found here: [https://incontext-research.com/docs/adsupport/](https://incontext-research.com/docs/adsupport/)
-
-Each Context type has different setup params. If you want to know which data is required for setup you can ask our graphql schema by searching for "ContextTaskData<Ad-Type>" Where ad type is one of the types you retrieved above, for example [ContextTaskDataFacebookNewsfeedVideoAutoplay](https://portal.incontext-research.com/docs/explorer?query=%7B%0A++__type%28name%3A+%22ContextTaskDataFacebookNewsfeedVideoAutoplay%22%29+%7B%0A++++name%0A++++description%0A++++fields+%7B%0A++++++name%0A++++++description%0A++++%7D%0A++%7D%0A%7D%0A&variables=)
-
-## Survey tasks
-
-As for now survey tasks don't require any additional setup and we send the subjects back to the provided referrer when entering our system.
-
-The system allows to re-enter the survey between exposures. An intermission call will be made to either the HTTP referrer or the origin if no referrer is provided. The system appends a SessionID that must be returned back for follow up exposures:
-
-BaseUrl: https://schedule.incontext-research.com/scheduler/entry/
-
-| Name      | Type    | Description                                                                                               |
-| --------- | ------- | --------------------------------------------------------------------------------------------------------- |
-| sessionID | integer | A session identifier we send you in the intermission step. Please save this value and pass it back to us. |
-
-More infomation about survey intergration can be found here: [https://incontext-research.com/docs/surveyintegration/](https://incontext-research.com/docs/surveyintegration/)
-
-## Presenter tasks
-
-A presenter task has the same phases as a context task. But instead of showing an ad inside a context environment the subject is presented an ad setup in a fixed environment.
-
-### TV player
-
-The TV player lets you setup up to 9 "TV channels" with different content and ads that are shown in between.
-The core unit of the setup is a block. You can setup as many blocks as you want and blocks are shown in consecutive order.
-
-You can alternate/setup as many blocks as you want. A content block ends when the first video ends. An ad block ends after the last ad was seen/skipped. After a block ends, the next block is shown right away.
-
-![tv flow](https://portal.incontext-research.com/images/docs/tv-flow.jpg)
-
----
-
-**RECORDED DATA**
-
-Respondent behavior in TV tasks is recorded as timelines of events with timestamps. There is an example query setup in the explorer.
-
-The following events are distinguished:
-
-_StimulusSequence_
-
-Gives back events when a video file started visibly playing.
+| Timeline | Events |
+| --- | --- |
+| `StimulusSequence` | A video started playing visibly (`StimulusID` is the video ID) |
+| `StimulusSequenceHost` | Task start and end (`StimulusID` is `TaskStart` or `TaskEnd`) |
+| `Interact` | The respondent switched channels (`EventType: zapping`, `Value` is the video that was playing) |
+| `CustomEvent` | Playback stopped, failed to restart or resumed, for example on a bad connection (`Name` is the video, `Value` is the event) |
 
 ```json
 "StimulusSequence": {
   "nodes": [
-    {
-      "Timestamp": "1542967291284",
-      "StimulusID": "content1_ch1"
-    },
-    {
-      "Timestamp": "1542967356656",
-      "StimulusID": "spot_1"
-    },
-    {
-      "Timestamp": "1542967386612",
-      "StimulusID": "content2_ch1"
-    }
-
+    { "Timestamp": "1542967291284", "StimulusID": "content1_ch1" },
+    { "Timestamp": "1542967356656", "StimulusID": "spot_1" }
   ]
-}
-```
-
-_StimulusSequenceHost_
-
-Gives back absolute task start and end.
-
-```json
-"StimulusSequenceHost": {
-  "nodes": [
-    {
-      "Timestamp": "1542967291279",
-      "StimulusID": "TaskStart"
-    },
-    {
-      "Timestamp": "1542967447604",
-      "StimulusID": "TaskEnd"
-    }
-  ]
-}
-```
-
-_Interact_
-
-Gives back when the user zapped away from a video. "Value" is the video ID that was playing when the user zapped away.
-
-```json
+},
 "Interact": {
   "nodes": [
-    {
-      "Timestamp": "1542967314343",
-      "Value": "content1_ch1",
-      "EventType": "zapping"
-    },
-    {
-      "Timestamp": "1542967369191",
-      "Value": "spot_1",
-      "EventType": "zapping"
-    }
+    { "Timestamp": "1542967314343", "Value": "content1_ch1", "EventType": "zapping" }
   ]
 }
 ```
 
-_CustomEvents_
+---
 
-Gives back events if the playback of any video was stopped for whatever reason (e.g. bad internet connection).
+# Organization settings
 
-```json
-"CustomEvent": {
-  "nodes": [
-    {
-      "Timestamp": "1542889006504",
-      "Name": "ch1_1",
-      "Value": "stopped"
-    },
-    {
-      "Timestamp": "1542889006505",
-      "Name": "ch1_1",
-      "Value": "restart failed"
-    },
-    {
-    "Timestamp": "1542889170304",
-    "Name": "ch1_1",
-    "Value": "resumed"
-    }
-  ]
-}
-```
+`settings` returns your organization's defaults:
 
-# System entry policies
-
-The system entry to start and resume a session is  
-[https://schedule.incontext-research.com/scheduler/entry](https://schedule.incontext-research.com/scheduler/entry)
-
-A session start requires at least the parameters ProjectID and SubjectGroupID. The UserHash is optional but recommended. If no UserHash is provided, the system will provide a unique user hash. If a UserHash is provided and if it is unique for the called project, stimulus presentation and data collection will be performed normally. If a UserHash already exists in the system, the user will see a termination page:
-_"Your session is expired. Unfortunately, you can only access this survey once. If you have questions or concerns, please contact us at [app-support@eye-square.com](mailto:app-support@eye-square.com) and include your SessionID: 123456"_
-
-A session resume for the case "task-survey-task" (see chapter Survey Intermission) has to be directed to the same URL:
-
-[https://schedule.incontext-research.com/scheduler/entry?SessionID=](https://schedule.incontext-research.com/scheduler/entry?SessionID=)
-
-but requires the SessionID as an additional parameter (all other parameters can be omitted).
-
-# Session validation
-
-The following parameters will be sent back to the survey to be used for filtering/disqualifying respondents:
-
-| Name     | Type           | Description                                                                                                                                                                              |
-| -------- | -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| payload  | GET parameters | All variables the system gets passed into will also be returned unmodified.                                                                                                              |
-| eligible | integer        | Will be passed after every exposure. Defines if the respondent meets the browser/OS requirements and has successfully installed the browser extension (if required). Values are 0 and 1. |
-| success  | integer        | Will be passed after every exposure. Defines if the respondent completed the task. Criteria for success depends on the project configuration. Values are 0 and 1.                        |
-
-# Success evaluation
-
-The success of a task can be defined and evaluated on a per project basis. Based on those definitions we analyze the validity of collected metrics. Different evaluation rules are applied by default based on the ad formats and if a task has user guidance enabled or not. These evaluation rules can be customized for each task.
-
-If no metrics are recorded we don't evaluate success and return always 1.
-
-## Context tasks defaults
-
-In the table below you see the defaults used:
-
-|Context Type|Guided Tasks|Non Guided Tasks|
-|----------|----------|----------|
-|facebook-multiple|{"loaded":true}|{"loaded":true}|
-|facebook-newsfeed-static|{"visible":1}|{"visible":1}|
-|facebook-newsfeed-video-autoplay|{"percentPlayed":90}|{"visible":1}|
-|facebook-newsfeed-carousel|{"elements":[{"id":"carousel-container","visible":1}]}|{"elements":[{"id":"carousel-container","visible":1}]}|
-|facebook-newsfeed-midroll|{"elements":[{"id":"post-*-midroll-*-item-0","percentPlayed":90}]}|{"elements":[{"id":"post-*","visible":1}]}|
-|facebook-newsfeed-content-video|{"percentPlayed":90}|{"visible":1}|
-|facebook-stories-static|{"elements":[{"id":"story-0","visible":1}]}|{"elements":[{"id":"story-0","visible":1}]}|
-|facebook-stories-video|{"elements":[{"id":"story-0","visible":1}]}|{"elements":[{"id":"story-0","visible":1}]}|
-|facebook-stories-carousel|{"elements":[{"id":"story-0","visible":1}]}|{"elements":[{"id":"story-0","visible":1}]}|
-|facebook-stories-content|{"elements":[{"id":"story-0","visible":1}]}|{"elements":[{"id":"story-0","visible":1}]}|
-|instagram-multiple|{"loaded":true}|{"loaded":true}|
-|instagram-newsfeed-static|{"visible":1}|{"visible":1}|
-|instagram-newsfeed-video-autoplay|{"percentPlayed":90}|{"visible":1}|
-|instagram-newsfeed-carousel|{"elements":[{"id":"carousel-container","visible":1}]}|{"elements":[{"id":"carousel-container","visible":1}]}|
-|instagram-reels-infeed-video|{"percentPlayed":90}|{"visible":1}|
-|instagram-stories-static|{"elements":[{"id":"story-0","visible":1}]}|{"elements":[{"id":"story-0","visible":1}]}|
-|instagram-stories-video|{"elements":[{"id":"story-0","visible":1}]}|{"elements":[{"id":"story-0","visible":1}]}|
-|instagram-stories-carousel|{"elements":[{"id":"story-0","visible":1}]}|{"elements":[{"id":"story-0","visible":1}]}|
-|instagram-stories-content|{"elements":[{"id":"story-0","visible":1}]}|{"elements":[{"id":"story-0","visible":1}]}|
-|snapchat-static|{"elements":[{"id":"story-0","visible":1}]}|{"elements":[{"id":"story-0","visible":1}]}|
-|snapchat-video|{"elements":[{"id":"story-0","visible":1}]}|{"elements":[{"id":"story-0","visible":1}]}|
-|snapchat-carousel|{"elements":[{"id":"story-0","visible":1}]}|{"elements":[{"id":"story-0","visible":1}]}|
-|snapchat-inline-static|{"visible":1}|{"visible":1}|
-|snapchat-inline-video|{"visible":1}|{"visible":1}|
-|tiktok-multiple|{"loaded":true}|{"loaded":true}|
-|tiktok-brand-takeover-static|{"elements":[{"id":"tiktok-post","visible":1}]}|{"elements":[{"id":"tiktok-post","visible":1}]}|
-|tiktok-brand-takeover-video|{"elements":[{"id":"tiktok-post","percentPlayed":90}]}|{"elements":[{"id":"tiktok-post","visible":1}]}|
-|tiktok-infeed-video|{"elements":[{"id":"tiktok-post","percentPlayed":90}]}|{"elements":[{"id":"tiktok-post","visible":1}]}|
-|tiktok-topview-video|{"elements":[{"id":"tiktok-post","percentPlayed":90}]}|{"elements":[{"id":"tiktok-post","visible":1}]}|
-|twitch-preroll|{"played":5000}|{"visible":1}|
-|twitch-midroll|{"played":5000}|{"visible":1}|
-|twitter-newsfeed-static|{"visible":1}|{"visible":1}|
-|twitter-newsfeed-video-autoplay|{"percentPlayed":90}|{"visible":1}|
-|websites-homepage-static|{"visible":1}|{"visible":1}|
-|websites-homepage-video|{"visible":1}|{"visible":1}|
-|websites-multiple|{"loaded":true}|{"loaded":true}|
-|youku-preroll|{"visible":1}|{"visible":1}|
-|youtube-discovery|{"loaded":true}|{"loaded":true}|
-|youtube-content|{"loaded":true}|{"loaded":true}|
-|youtube-frequency|{"played":5000}|{"visible":1}|
-|youtube-pods|{"played":5000}|{"visible":1}|
-|youtube-preroll|{"played":5000}|{"visible":1}|
-|youtube-masthead|{"elements":[{"id":"youtube-content-video","played":5000}]}|{"elements":[{"id":"mastheadAd-0","visible":1}]}|
-|youtube-multiple|{"loaded":true}|{"loaded":true}|
-|youtube-shorts-infeed|{"percentPlayed":90}|{"visible":1}|
-|youtube-shorts-content|{"percentPlayed":90}|{"visible":1}|
-
-# Instructions
-
-Presenter and Context tasks can have instructions shown before (pre instructions) and after the task (post instructions).
-
-A instruction is made of following fields:
-
-- html: html that is shown as the instruction text.
-- button: content of the instruction button.
-
-Special cases:
-
-- if no instructions (`null/undefined`) are set, default instructions are used.
-- if instructions is an empty onject (`{}`), no instructions are shown.
-
-We will add default instructions in the following way:
-
-- we always add pre instructions
-- if the task is the last task, we add post instructions as well.
-
-Replacements and placeholders:
-
-It is possible to have dynamic values inside of the instructions html (pre instructions only for now) to make instruction strings more generic. Following placeholders will be replaced with the according value on runtime:
-
-- `{{duration}}` => exposureDuration(context task) or timeout(presenter task) of the task.
-- `{{name}}` => adName of the task (context tasks only).
-- `{{context}}` => context of the task (context tasks only).
-
-## Examples:
-
-### Simple example:
-
-The following would show a custom instruction before a task but none after. It would also replace `{{duration}}` with the set exposure duration.
-
-```json
-"instructions": {
-  "pre": {
-    "html": "You will now see a Facebook newsfeed. Please browse it for the next {{duration}}s as you would normally do.",
-    "button": "continue"
+```graphql
+{
+  settings {
+    allowReentry          # default for new projects
+    successParameters     # default success parameters per format
+    watermark { mode }    # default watermark
   }
 }
 ```
 
-[View in explorer](https://portal.incontext-research.com/docs/explorer?query=mutation+%28%24data%3A+ProjectInput%21%29+%7B%0A++projectCreate%28data%3A+%24data%29+%7B%0A++++id%0A++++createdBy+%7B%0A++++++name%0A++++%7D%0A++++subjectGroups+%7B%0A++++++nodes+%7B%0A++++++++id%0A++++++++entryUrl%0A++++++%7D%0A++++%7D%0A++%7D%0A%7D%0A&variables=%7B%0A++%22data%22%3A+%7B%0A++++%22description%22%3A+%22only+pre+instructions%22%2C%0A++++%22language%22%3A+%22en_US%22%2C%0A++++%22billingReference%22%3A+%22b+nr%22%2C%0A++++%22subjectGroups%22%3A+%5B%0A++++++%7B%0A++++++++%22device%22%3A+%22desktop%22%2C%0A++++++++%22contextMode%22%3A+%22public%22%2C%0A++++++++%22tasks%22%3A+%5B%0A++++++++++%7B%0A++++++++++++%22type%22%3A+%22context%22%2C%0A++++++++++++%22contextType%22%3A+%22facebookNewsfeedVideoAutoplay%22%2C%0A++++++++++++%22instructions%22%3A+%7B%0A++++++++++++++%22pre%22%3A+%7B%0A++++++++++++++++%22html%22%3A+%22You+will+now+see+a+Facebook+newsfeed.%3Cbr%2F%3E+Please+browse+it+for+the+next+%7B%7Bduration%7D%7Ds+as+you+would+normally+do.%22%2C%0A++++++++++++++++%22button%22%3A+%22continue%22%0A++++++++++++++%7D%0A++++++++++++%7D%2C%0A++++++++++++%22adName%22%3A+%22name+of+the+ad%22%2C%0A++++++++++++%22userGuidance%22%3A+false%2C%0A++++++++++++%22exposureDuration%22%3A+45%2C%0A++++++++++++%22timeout%22%3A+90%2C%0A++++++++++++%22data%22%3A+%7B%0A++++++++++++++%22text%22%3A+%22Join+us+today+at+redcross.org%22%2C%0A++++++++++++++%22brandName%22%3A+%22American+Red+Cross%22%2C%0A++++++++++++++%22mediaSrc%22%3A+%7B%0A++++++++++++++++%22videoUrl%22%3A+%22https%3A%2F%2Fd2dom67l5t3ck7.cloudfront.net%2Fdemos%2FAmericanRedCross15.mp4%22%0A++++++++++++++%7D%2C%0A++++++++++++++%22logoSrc%22%3A+%7B%0A++++++++++++++++%22imageUrl%22%3A+%22https%3A%2F%2Fd2dom67l5t3ck7.cloudfront.net%2Fdemos%2FredcrosslogoUS.jpg%22%0A++++++++++++++%7D%2C%0A++++++++++++++%22brandUrl%22%3A+%22https%3A%2F%2Fwww.facebook.com%2Fredcross%2F%22%0A++++++++++++%7D%0A++++++++++%7D%0A++++++++%5D%0A++++++%7D%0A++++%5D%0A++%7D%0A%7D)
+---
 
-![custom-instructions](https://portal.incontext-research.com/images/docs/fb-newsfeed-instructions.png)
+# Changelog
 
-### Complex example
+| Date | Change |
+| --- | --- |
+| 2026-10 | Page rewritten: quickstart, current roles and error format, return URL parameters, success parameter rules and current defaults, complete list of context types. Removed the deprecated token login. |
+| 2026-07 | API secrets managed in the Accounts app |
 
-```jsonc
-// first task:
-"instructions": {},
-// second task:
-"instructions": {
-  "pre": {
-    "html": "You will now see a Facebook newsfeed.<br/> Please browse it for the next {{duration}}s as you would normally do.",
-    "button": "continue"
-  },
-  "post": {
-    "html": "That was nice, wasn't it?",
-    "button": "continue"
-  }
-}
-// third task:
-"instructions": null // null|undefined
-```
+---
 
-This example shows no instructions in the first, custom instructions for the second, and default instructions in the third task.
+# Support
 
-[View in explorer](https://portal.incontext-research.com/docs/explorer?query=mutation+%28%24data%3A+ProjectInput%21%29+%7B%0A++projectCreate%28data%3A+%24data%29+%7B%0A++++id%0A++++createdBy+%7B%0A++++++name%0A++++%7D%0A++++subjectGroups+%7B%0A++++++nodes+%7B%0A++++++++id%0A++++++++entryUrl%0A++++++%7D%0A++++%7D%0A++%7D%0A%7D%0A&variables=%7B%0A++%22data%22%3A+%7B%0A++++%22description%22%3A+%22complext+instructions%22%2C%0A++++%22language%22%3A+%22en_US%22%2C%0A++++%22billingReference%22%3A+%22b+nr%22%2C%0A++++%22subjectGroups%22%3A+%5B%0A++++++%7B%0A++++++++%22device%22%3A+%22desktop%22%2C%0A++++++++%22contextMode%22%3A+%22public%22%2C%0A++++++++%22tasks%22%3A+%5B%0A++++++++++%7B%0A++++++++++++%22type%22%3A+%22context%22%2C%0A++++++++++++%22contextType%22%3A+%22facebookNewsfeedVideoAutoplay%22%2C%0A++++++++++++%22instructions%22%3A+%7B%7D%2C%0A++++++++++++%22adName%22%3A+%22name+of+the+ad%22%2C%0A++++++++++++%22userGuidance%22%3A+false%2C%0A++++++++++++%22exposureDuration%22%3A+45%2C%0A++++++++++++%22timeout%22%3A+90%2C%0A++++++++++++%22data%22%3A+%7B%0A++++++++++++++%22text%22%3A+%22Join+us+today+at+redcross.org%22%2C%0A++++++++++++++%22brandName%22%3A+%22American+Red+Cross%22%2C%0A++++++++++++++%22mediaSrc%22%3A+%7B%0A++++++++++++++++%22videoUrl%22%3A+%22https%3A%2F%2Fd2dom67l5t3ck7.cloudfront.net%2Fdemos%2FAmericanRedCross15.mp4%22%0A++++++++++++++%7D%2C%0A++++++++++++++%22logoSrc%22%3A+%7B%0A++++++++++++++++%22imageUrl%22%3A+%22https%3A%2F%2Fd2dom67l5t3ck7.cloudfront.net%2Fdemos%2FredcrosslogoUS.jpg%22%0A++++++++++++++%7D%2C%0A++++++++++++++%22brandUrl%22%3A+%22https%3A%2F%2Fwww.facebook.com%2Fredcross%2F%22%0A++++++++++++%7D%0A++++++++++%7D%2C%0A++++++++++%7B%0A++++++++++++%22type%22%3A+%22context%22%2C%0A++++++++++++%22contextType%22%3A+%22facebookNewsfeedVideoAutoplay%22%2C%0A++++++++++++%22instructions%22%3A+%7B%0A++++++++++++++%22pre%22%3A+%7B%0A++++++++++++++++%22html%22%3A+%22You+will+now+see+a+Facebook+newsfeed.%3Cbr%2F%3E+Please+browse+it+for+the+next+%7B%7Bduration%7D%7Ds+as+you+would+normally+do.%22%2C%0A++++++++++++++++%22button%22%3A+%22continue%22%0A++++++++++++++%7D%2C%0A++++++++++++++%22post%22%3A+%7B%0A++++++++++++++++%22html%22%3A+%22That+was+nice%2C+wasn%27t+it%3F%22%2C%0A++++++++++++++++%22button%22%3A+%22continue%22%0A++++++++++++++%7D%0A++++++++++++%7D%2C%0A++++++++++++%22adName%22%3A+%22name+of+the+ad%22%2C%0A++++++++++++%22userGuidance%22%3A+false%2C%0A++++++++++++%22exposureDuration%22%3A+45%2C%0A++++++++++++%22timeout%22%3A+90%2C%0A++++++++++++%22data%22%3A+%7B%0A++++++++++++++%22text%22%3A+%22Join+us+today+at+redcross.org%22%2C%0A++++++++++++++%22brandName%22%3A+%22American+Red+Cross%22%2C%0A++++++++++++++%22mediaSrc%22%3A+%7B%0A++++++++++++++++%22videoUrl%22%3A+%22https%3A%2F%2Fd2dom67l5t3ck7.cloudfront.net%2Fdemos%2FAmericanRedCross15.mp4%22%0A++++++++++++++%7D%2C%0A++++++++++++++%22logoSrc%22%3A+%7B%0A++++++++++++++++%22imageUrl%22%3A+%22https%3A%2F%2Fd2dom67l5t3ck7.cloudfront.net%2Fdemos%2FredcrosslogoUS.jpg%22%0A++++++++++++++%7D%2C%0A++++++++++++++%22brandUrl%22%3A+%22https%3A%2F%2Fwww.facebook.com%2Fredcross%2F%22%0A++++++++++++%7D%0A++++++++++%7D%2C%0A++++++++++%7B%0A++++++++++++%22type%22%3A+%22context%22%2C%0A++++++++++++%22contextType%22%3A+%22facebookNewsfeedVideoAutoplay%22%2C%0A++++++++++++%22adName%22%3A+%22name+of+the+ad%22%2C%0A++++++++++++%22userGuidance%22%3A+false%2C%0A++++++++++++%22exposureDuration%22%3A+45%2C%0A++++++++++++%22timeout%22%3A+90%2C%0A++++++++++++%22data%22%3A+%7B%0A++++++++++++++%22text%22%3A+%22Join+us+today+at+redcross.org%22%2C%0A++++++++++++++%22brandName%22%3A+%22American+Red+Cross%22%2C%0A++++++++++++++%22mediaSrc%22%3A+%7B%0A++++++++++++++++%22videoUrl%22%3A+%22https%3A%2F%2Fd2dom67l5t3ck7.cloudfront.net%2Fdemos%2FAmericanRedCross15.mp4%22%0A++++++++++++++%7D%2C%0A++++++++++++++%22logoSrc%22%3A+%7B%0A++++++++++++++++%22imageUrl%22%3A+%22https%3A%2F%2Fd2dom67l5t3ck7.cloudfront.net%2Fdemos%2FredcrosslogoUS.jpg%22%0A++++++++++++++%7D%2C%0A++++++++++++++%22brandUrl%22%3A+%22https%3A%2F%2Fwww.facebook.com%2Fredcross%2F%22%0A++++++++++++%7D%0A++++++++++%7D%0A++++++++%5D%0A++++++%7D%0A++++%5D%0A++%7D%0A%7D)
-
-# List of supported languages
-
-The current list of supported languages per context can be found here: [http://e2.ms/local](http://e2.ms/local)
-
-# List of supported operating systems and browsers
-
-The current list of supported OSs and browsers can be found here: [https://incontext-research.com/docs/requirements/](https://incontext-research.com/docs/requirements/)
-
-## Overwriting defaults:
-
-The supported Operating Systems and browsers can be overwritten using `deploymentFilters`, either on the subjectGroup or project level, in that order of precedence.
-
-### Examples:
-
-Allow Windows (Xp and above), Linux (any version) and any browser.
-
-```json
-"deploymentFilters": {
-  "os": [
-    {
-      "name": "windows",
-      "min": "8"
-    },
-    {
-      "name": "linux"
-    }
-  ]
-}
-```
-
-The above is equivalent to this:
-
-```json
-"deploymentFilters": {
-  "os": [
-    {
-      "name": "windows",
-      "min": "5.2"
-    },
-    {
-      "name": "linux"
-    }
-  ],
-  "browsers": [ ]
-}
-```
-
-Example with browsers:
-
-```json
-"deploymentFilters": {
-  "os": [
-    {
-      "name": "mac os",
-      "min": "10.6"
-    },
-  ]
-  "browsers": [
-    {
-      "name": "chrome",
-      "min": "80"
-    },
-    {
-      "name": "firefox",
-      "min": "80"
-    }
-  ]
-}
-```
-
-Matches are case insensitive, see [ua-parser-js](https://github.com/faisalman/ua-parser-js) for possible OS and browser name values.
-
-# Query test results
-
-Metrics and timelines of a project can be queried through the api. Both are part of a project response, so you can query metrics and timelines on every project object.
-
-## Query filters
-
-Both, timelines and metrics let you set filter for retrieving subsets of the recorded data.
-
-- subjectGroup: String, if set only returns data for that subjectGroup inside a project
-- task: String, if set, only returns data for a matching taskId. Note: if you don't set a subjectGroup but a taskId you may recieve entries for different subjectGroups.
-- subject: Only returns data of a specific subject.
-
-All filter can be combined together. [View in Explorer](https://portal.incontext-research.com/docs/explorer?query=%7B%0A++projects%28first%3A+1%29+%7B%0A++++nodes+%7B%0A++++++id%0A++++++metrics%28first%3A+10%2C+subjectGroup%3A+%22subjectGroupId%22%2C+task%3A+%22taskId%22%2C+subject%3A+%22subjectId%22%29+%7B%0A++++++++nodes+%7B%0A++++++++++projectId%0A++++++++++subjectGroupId%0A++++++++++taskId%0A++++++++++subjectId%0A++++++++%7D%0A++++++%7D%0A++++++timelines%28first%3A+10%2C+subjectGroup%3A+%22subjectGroupId%22%2C+task%3A+%22taskId%22%2C+subject%3A+%22subjectId%22%29+%7B%0A++++++++nodes+%7B%0A++++++++++projectId%0A++++++++++subjectGroupId%0A++++++++++taskId%0A++++++++++subjectId%0A++++++++%7D%0A++++++%7D%0A++++%7D%0A++%7D%0A%7D%0A&variables=)
-
-## Metrics
-
-A metric is a (ad/media) preformance indicator derived of events of a recording. It typically measures things like durations a video was seen, the time a button was clicked.
-
-Every Metric Set contains one or more elementSets in which metrics are grouped. An element describes an observed element during a test run. In most cases it's the tested ad and its properties (like video controls).
-
-A list of which metrics are supported by each context and ad type can be found [here](https://docs.google.com/spreadsheets/d/1NSTtvSoskgLR4HXe3Xa7BWokGa-tUl2rVjizTDYQ9WY/edit?gid=757911248#gid=757911248)
-
-## Timelines
-
-A timeline is a sequence of recorded events.
-
-# Contact
-
-For technical support regarding this API please send an email to
-api-support@eye-square.com or ask us in slack.
+For technical questions about this API, email [api-support@eye-square.com](mailto:api-support@eye-square.com). Include the request, the full response and any error ID.

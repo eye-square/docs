@@ -2,13 +2,13 @@
 
 The In Context API lets you create and edit In Context projects from your own systems, send respondents into a study, and read back the behavioral data that was recorded. It is a single [GraphQL](https://graphql.org/learn/) endpoint.
 
-|                      |                                                                                                                              |
-| -------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| Endpoint             | `POST https://api.incontext-research.com/v4/graphql`                                                                         |
-| Authentication       | `Authorization: Secret <your API secret>` header                                                                             |
-| Format               | JSON request body with `query` and optional `variables` and `operationName`                                                  |
+| | |
+| --- | --- |
+| Endpoint | `POST https://api.incontext-research.com/v4/graphql` |
+| Authentication | `Authorization: Secret <your API secret>` header |
+| Format | JSON request body with `query` and optional `variables` and `operationName` |
 | Interactive explorer | [portal.incontext-research.com/docs/explorer](https://portal.incontext-research.com/docs/explorer) (requires a Portal login) |
-| Source of this page  | [github.com/eye-square/docs](https://github.com/eye-square/docs/blob/master/graphql-api.md)                                  |
+| Source of this page | [github.com/eye-square/docs](https://github.com/eye-square/docs/blob/master/graphql-api.md) |
 
 Related guides: [survey integration](https://incontext-research.com/docs/surveyintegration/), [supported ad formats](https://incontext-research.com/docs/adsupport/), [system requirements](https://incontext-research.com/docs/requirements/), [metrics per format](https://e2.ms/apimetrics), [supported languages per context](https://e2.ms/local), [plugins and webhooks](https://github.com/eye-square/docs/blob/master/plugins/plugins.md).
 
@@ -69,30 +69,17 @@ List the available context types and look at the data a format needs:
 
 ```graphql
 {
-	__type(name: "CONTEXT_TASK_TYPES") {
-		enumValues {
-			name
-			description
-		}
-	}
+  __type(name: "CONTEXT_TASK_TYPES") {
+    enumValues { name description }
+  }
 }
 ```
 
 ```graphql
 {
-	__type(name: "ContextTaskDataFacebookNewsfeedVideoAutoplay") {
-		fields {
-			name
-			description
-			type {
-				kind
-				name
-				ofType {
-					name
-				}
-			}
-		}
-	}
+  __type(name: "ContextTaskDataFacebookNewsfeedVideoAutoplay") {
+    fields { name description type { kind name ofType { name } } }
+  }
 }
 ```
 
@@ -102,15 +89,15 @@ You can also browse these types without writing queries: open **Docs** in the [e
 
 ```graphql
 mutation CreateProject($data: ProjectInput!) {
-	projectCreate(data: $data) {
-		id
-		subjectGroups {
-			nodes {
-				id
-				entryUrl
-			}
-		}
-	}
+  projectCreate(data: $data) {
+    id
+    subjectGroups {
+      nodes {
+        id
+        entryUrl
+      }
+    }
+  }
 }
 ```
 
@@ -118,40 +105,40 @@ Variables:
 
 ```json
 {
-	"data": {
-		"description": "Red Cross video test - Facebook feed",
-		"language": "en_US",
-		"billingReference": "PO-12345",
-		"subjectGroups": [
-			{
-				"id": "fb-desktop",
-				"device": "desktop",
-				"contextMode": "public",
-				"tasks": [
-					{
-						"id": "exposure",
-						"type": "context",
-						"contextType": "facebookNewsfeedVideoAutoplay",
-						"adName": "Red Cross",
-						"userGuidance": false,
-						"timeout": 120,
-						"exposureDuration": 60,
-						"data": {
-							"brandName": "American Red Cross",
-							"text": "Join us today at redcross.org",
-							"logoSrc": {
-								"imageUrl": "https://d2dom67l5t3ck7.cloudfront.net/demos/redcrosslogoUS.jpg"
-							},
-							"mediaSrc": {
-								"videoUrl": "https://d2dom67l5t3ck7.cloudfront.net/demos/AmericanRedCross15.mp4"
-							},
-							"brandUrl": "https://www.facebook.com/redcross/"
-						}
-					}
-				]
-			}
-		]
-	}
+  "data": {
+    "description": "Red Cross video test - Facebook feed",
+    "language": "en_US",
+    "billingReference": "PO-12345",
+    "subjectGroups": [
+      {
+        "id": "fb-desktop",
+        "device": "desktop",
+        "contextMode": "public",
+        "tasks": [
+          {
+            "id": "exposure",
+            "type": "context",
+            "contextType": "facebookNewsfeedVideoAutoplay",
+            "adName": "Red Cross",
+            "userGuidance": false,
+            "timeout": 120,
+            "exposureDuration": 60,
+            "data": {
+              "brandName": "American Red Cross",
+              "text": "Join us today at redcross.org",
+              "logoSrc": {
+                "imageUrl": "https://d2dom67l5t3ck7.cloudfront.net/demos/redcrosslogoUS.jpg"
+              },
+              "mediaSrc": {
+                "videoUrl": "https://d2dom67l5t3ck7.cloudfront.net/demos/AmericanRedCross15.mp4"
+              },
+              "brandUrl": "https://www.facebook.com/redcross/"
+            }
+          }
+        ]
+      }
+    ]
+  }
 }
 ```
 
@@ -171,32 +158,24 @@ At the end of the study the respondent is sent back to your survey with `success
 
 ```graphql
 query Results($projectId: CustomID!) {
-	project(id: $projectId) {
-		metrics(first: 50) {
-			totalCount
-			pageInfo {
-				hasNextPage
-				endCursor
-			}
-			nodes {
-				subjectGroupId
-				taskId
-				subjectId
-				elements(first: 20) {
-					nodes {
-						id
-						type
-						metrics(first: 100) {
-							nodes {
-								name
-								value
-							}
-						}
-					}
-				}
-			}
-		}
-	}
+  project(id: $projectId) {
+    metrics(first: 50) {
+      totalCount
+      pageInfo { hasNextPage endCursor }
+      nodes {
+        subjectGroupId
+        taskId
+        subjectId
+        elements(first: 20) {
+          nodes {
+            id
+            type
+            metrics(first: 100) { nodes { name value } }
+          }
+        }
+      }
+    }
+  }
 }
 ```
 
@@ -212,49 +191,37 @@ query Results($projectId: CustomID!) {
 
 A **project** is one study. It contains one or more **subject groups** (often called cells): one test setup that a respondent is routed into. Each subject group has a device class (`desktop` or `mobile`) and an ordered list of **tasks**.
 
-| Task `type` | What the respondent does                                                                                          | Configured with            |
-| ----------- | ----------------------------------------------------------------------------------------------------------------- | -------------------------- |
-| `context`   | Browses a realistic replica of a platform (Facebook, Instagram, TikTok, YouTube and others) that contains your ad | `contextType` and `data`   |
-| `presenter` | Watches ads in a fixed presenter, for example a TV player                                                         | `presenterType` and `data` |
-| `setup`     | Answers a short setup step, for example choosing topics of interest                                               | `setupType` and `data`     |
-| `survey`    | Returns to your survey in the middle of the study and comes back afterwards                                       | no further fields          |
+| Task `type` | What the respondent does | Configured with |
+| --- | --- | --- |
+| `context` | Browses a realistic replica of a platform (Facebook, Instagram, TikTok, YouTube and others) that contains your ad | `contextType` and `data` |
+| `presenter` | Watches ads in a fixed presenter, for example a TV player | `presenterType` and `data` |
+| `setup` | Answers a short setup step, for example choosing topics of interest | `setupType` and `data` |
+| `survey` | Returns to your survey in the middle of the study and comes back afterwards | no further fields |
 
 Tasks can be combined in any order. A typical **task, survey, task** group exposes the respondent to the ad, returns them to your survey for intermediate questions, and then shows a second, guided exposure:
 
 ```json
 {
-	"id": "fb-tst",
-	"device": "mobile",
-	"contextMode": "public",
-	"tasks": [
-		{
-			"id": "exposure-1",
-			"type": "context",
-			"contextType": "facebookNewsfeedVideoAutoplay",
-			"userGuidance": false,
-			"...": "..."
-		},
-		{ "id": "mid-survey", "type": "survey" },
-		{
-			"id": "exposure-2",
-			"type": "context",
-			"contextType": "facebookNewsfeedVideoAutoplay",
-			"userGuidance": true,
-			"...": "..."
-		}
-	]
+  "id": "fb-tst",
+  "device": "mobile",
+  "contextMode": "public",
+  "tasks": [
+    { "id": "exposure-1", "type": "context", "contextType": "facebookNewsfeedVideoAutoplay", "userGuidance": false, "...": "..." },
+    { "id": "mid-survey", "type": "survey" },
+    { "id": "exposure-2", "type": "context", "contextType": "facebookNewsfeedVideoAutoplay", "userGuidance": true, "...": "..." }
+  ]
 }
 ```
 
 Key task settings:
 
-| Field              | Meaning                                                                                                                                                       |
-| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `exposureDuration` | Seconds the respondent can be exposed to the ad within a context. The task ends when it runs out.                                                             |
-| `timeout`          | Maximum task duration in seconds. If no exposure duration is set, the task ends after the timeout.                                                            |
-| `userGuidance`     | Guides the respondent to the test ad: newsfeeds scroll to the ad and lock navigation, stories open the ad directly, YouTube ends the task after the pre-roll. |
-| `randomization`    | Tasks with randomization enabled are shuffled among each other.                                                                                               |
-| `adName`           | Ad name used in instructions, for example "Please now look for the {{name}} ad".                                                                              |
+| Field | Meaning |
+| --- | --- |
+| `exposureDuration` | Seconds the respondent can be exposed to the ad within a context. The task ends when it runs out. |
+| `timeout` | Maximum task duration in seconds. If no exposure duration is set, the task ends after the timeout. |
+| `userGuidance` | Guides the respondent to the test ad: newsfeeds scroll to the ad and lock navigation, stories open the ad directly, YouTube ends the task after the pre-roll. |
+| `randomization` | Tasks with randomization enabled are shuffled among each other. |
+| `adName` | Ad name used in instructions, for example "Please now look for the {{name}} ad". |
 
 `contextMode` is always `public`: a replica that uses publicly available content and needs no browser extension, app or platform login. The value `personal` is no longer supported.
 
@@ -272,12 +239,12 @@ Authorization: Secret <your API secret>
 
 `me { role }` tells you how the request was authenticated:
 
-| `role`          | Meaning                                                      |
-| --------------- | ------------------------------------------------------------ |
-| `TEAM`          | Authenticated with a team secret                             |
-| `ORGANIZATION`  | Authenticated with an organization secret                    |
+| `role` | Meaning |
+| --- | --- |
+| `TEAM` | Authenticated with a team secret |
+| `ORGANIZATION` | Authenticated with an organization secret |
 | `USER`, `ADMIN` | Authenticated as a Portal user (for example in the explorer) |
-| `PUBLIC`        | Not authenticated. Only `me` is available.                   |
+| `PUBLIC` | Not authenticated. Only `me` is available. |
 
 The schema you see depends on how you are authenticated, so introspect with the same credential your integration uses.
 
@@ -297,24 +264,24 @@ Send a `POST` request with a JSON body to `https://api.incontext-research.com/v4
 
 ```json
 {
-	"query": "query Project($id: CustomID!) { project(id: $id) { id description } }",
-	"variables": { "id": "2026-10_AB001" },
-	"operationName": "Project"
+  "query": "query Project($id: CustomID!) { project(id: $id) { id description } }",
+  "variables": { "id": "2026-10_AB001" },
+  "operationName": "Project"
 }
 ```
 
 The root operations are:
 
-| Operation                                                        | Purpose                                                         |
-| ---------------------------------------------------------------- | --------------------------------------------------------------- |
-| `me`                                                             | Current identity and role                                       |
-| `project(id)`                                                    | One project, including its groups, tasks, metrics and timelines |
-| `projects(first, last, after, before, organizationId, teamId)`   | All projects you can access, oldest first                       |
-| `search(type: PROJECT, query, first, ...)`                       | Text search across your projects                                |
-| `settings`                                                       | Organization defaults, for example success parameters           |
-| `plugins`, `plugin`, `pluginInstallations`, `pluginInstallation` | Available and installed plugins                                 |
-| `projectCreate(data, organizationId, teamId)`                    | Create a project (mutation)                                     |
-| `projectUpdate(id, data)`                                        | Update a project (mutation)                                     |
+| Operation | Purpose |
+| --- | --- |
+| `me` | Current identity and role |
+| `project(id)` | One project, including its groups, tasks, metrics and timelines |
+| `projects(first, last, after, before, organizationId, teamId)` | All projects you can access, oldest first |
+| `search(type: PROJECT, query, first, ...)` | Text search across your projects |
+| `settings` | Organization defaults, for example success parameters |
+| `plugins`, `plugin`, `pluginInstallations`, `pluginInstallation` | Available and installed plugins |
+| `projectCreate(data, organizationId, teamId)` | Create a project (mutation) |
+| `projectUpdate(id, data)` | Update a project (mutation) |
 
 There are no subscriptions, and the API does not upload media: host images and videos yourself at public HTTPS URLs.
 
@@ -344,12 +311,12 @@ The `data` field of a task is JSON, so the explorer cannot autocomplete inside i
 
 Lists use the [GraphQL connection model](https://graphql.org/learn/pagination/#complete-connection-model). They take four arguments:
 
-| Argument         | Meaning                                                      |
-| ---------------- | ------------------------------------------------------------ |
-| `first: Int`     | The first n entries, or the first n after the `after` cursor |
-| `last: Int`      | The last n entries, or the last n before the `before` cursor |
-| `after: Cursor`  | Start after this cursor                                      |
-| `before: Cursor` | End before this cursor                                       |
+| Argument | Meaning |
+| --- | --- |
+| `first: Int` | The first n entries, or the first n after the `after` cursor |
+| `last: Int` | The last n entries, or the last n before the `before` cursor |
+| `after: Cursor` | Start after this cursor |
+| `before: Cursor` | End before this cursor |
 
 Rules:
 
@@ -363,26 +330,17 @@ Every connection returns `pageInfo`, `totalCount`, `nodes` and `edges`:
 
 ```graphql
 {
-	projects(last: 2) {
-		pageInfo {
-			startCursor # cursor of the first returned entry
-			endCursor # cursor of the last returned entry
-			hasNextPage # more entries after endCursor
-			hasPreviousPage # more entries before startCursor
-		}
-		totalCount # number of entries in the whole list
-		nodes {
-			id
-			description
-			createdAt
-		}
-		edges {
-			cursor
-			node {
-				id
-			}
-		}
-	}
+  projects(last: 2) {
+    pageInfo {
+      startCursor      # cursor of the first returned entry
+      endCursor        # cursor of the last returned entry
+      hasNextPage      # more entries after endCursor
+      hasPreviousPage  # more entries before startCursor
+    }
+    totalCount         # number of entries in the whole list
+    nodes { id description createdAt }
+    edges { cursor node { id } }
+  }
 }
 ```
 
@@ -390,16 +348,10 @@ To walk through a long list, repeat the query with `after: <endCursor>` while `h
 
 ```graphql
 query Page($after: Cursor) {
-	projects(first: 50, after: $after) {
-		pageInfo {
-			hasNextPage
-			endCursor
-		}
-		nodes {
-			id
-			description
-		}
-	}
+  projects(first: 50, after: $after) {
+    pageInfo { hasNextPage endCursor }
+    nodes { id description }
+  }
 }
 ```
 
@@ -413,23 +365,23 @@ Each error has a `type`, a `message` and a nested list of `errors`. An entry can
 
 ```json
 {
-	"errors": [
-		{
-			"type": "InvalidDataError",
-			"message": "Invalid data",
-			"errors": [
-				{
-					"message": "invalid video url - format has to be .mp4",
-					"origin": ["subjectGroups", 0, "tasks", 0, "data", "mediaSrc"]
-				},
-				{
-					"message": "invalid image url - cannot access image under https://example.com/logo.jpg",
-					"origin": ["subjectGroups", 0, "tasks", 0, "data", "logoSrc"]
-				}
-			]
-		}
-	],
-	"data": { "projectCreate": null }
+  "errors": [
+    {
+      "type": "InvalidDataError",
+      "message": "Invalid data",
+      "errors": [
+        {
+          "message": "invalid video url - format has to be .mp4",
+          "origin": ["subjectGroups", 0, "tasks", 0, "data", "mediaSrc"]
+        },
+        {
+          "message": "invalid image url - cannot access image under https://example.com/logo.jpg",
+          "origin": ["subjectGroups", 0, "tasks", 0, "data", "logoSrc"]
+        }
+      ]
+    }
+  ],
+  "data": { "projectCreate": null }
 }
 ```
 
@@ -437,12 +389,12 @@ The first origin above points to `data.subjectGroups[0].tasks[0].data.mediaSrc`.
 
 `origin` is optional. It is only set when the error can point at a specific part of your input: `InvalidDataError` entries always have it, `ClientError` and `GraphQLError` entries sometimes. An `InternalServerError` can have causes unrelated to your input and does not point at an origin. Expect `origin` to be missing or an empty list.
 
-| `type`                | Cause                                                                                                             | What to do                                                |
-| --------------------- | ----------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
-| `InvalidDataError`    | The project input failed validation, for example an unreachable media URL or a device the format does not support | Fix the fields named in `origin` and resend               |
-| `GraphQLError`        | The query does not match the schema, for example an unknown field or a wrong enum value                           | Check the query against the schema in the explorer        |
-| `ClientError`         | The request was understood but cannot be carried out, for example missing permissions                             | Check the credential and the IDs                          |
-| `InternalServerError` | Unexpected server error. The message contains an error ID.                                                        | Retry once. If it persists, send the error ID to support. |
+| `type` | Cause | What to do |
+| --- | --- | --- |
+| `InvalidDataError` | The project input failed validation, for example an unreachable media URL or a device the format does not support | Fix the fields named in `origin` and resend |
+| `GraphQLError` | The query does not match the schema, for example an unknown field or a wrong enum value | Check the query against the schema in the explorer |
+| `ClientError` | The request was understood but cannot be carried out, for example missing permissions | Check the credential and the IDs |
+| `InternalServerError` | Unexpected server error. The message contains an error ID. | Retry once. If it persists, send the error ID to support. |
 
 A project that does not exist, or that your credential cannot access, is returned as `null` without an error.
 
@@ -458,19 +410,9 @@ Each format's data is described by a schema type named `ContextTaskData` plus th
 
 ```graphql
 {
-	__type(name: "ContextTaskDataFacebookNewsfeedStatic") {
-		fields {
-			name
-			description
-			type {
-				kind
-				name
-				ofType {
-					name
-				}
-			}
-		}
-	}
+  __type(name: "ContextTaskDataFacebookNewsfeedStatic") {
+    fields { name description type { kind name ofType { name } } }
+  }
 }
 ```
 
@@ -489,48 +431,48 @@ The tables below summarize the input types. The schema in the explorer holds the
 
 ## ProjectInput
 
-| Field               | Type                    | Notes                                                                                                                    |
-| ------------------- | ----------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| `description`       | `String!`               | Client, project and contact information. Used for billing.                                                               |
-| `language`          | `LANGUAGES!`            | Language of instructions and platform UI, for example `en_US`. See [supported languages](https://e2.ms/local).           |
-| `billingReference`  | `String`                | Job, project or PO number for billing                                                                                    |
-| `allowReentry`      | `Boolean`               | Lets respondents reopen an unfinished session with the same entry URL within two hours. They restart the task they left. |
-| `deploymentFilters` | `DeploymentFilterInput` | Allowed operating systems and browsers. See [Deployment filters](#deployment-filters).                                   |
-| `subjectGroups`     | `[SubjectGroupInput]`   | The groups of the project. Always send it, as `[]` if empty.                                                             |
+| Field | Type | Notes |
+| --- | --- | --- |
+| `description` | `String!` | Client, project and contact information. Used for billing. |
+| `language` | `LANGUAGES!` | Language of instructions and platform UI, for example `en_US`. See [supported languages](https://e2.ms/local). |
+| `billingReference` | `String` | Job, project or PO number for billing |
+| `allowReentry` | `Boolean` | Lets respondents reopen an unfinished session with the same entry URL within two hours. They restart the task they left. |
+| `deploymentFilters` | `DeploymentFilterInput` | Allowed operating systems and browsers. See [Deployment filters](#deployment-filters). |
+| `subjectGroups` | `[SubjectGroupInput]` | The groups of the project. Always send it, as `[]` if empty. |
 
 Project IDs are generated when you create a project. You cannot choose them.
 
 ## SubjectGroupInput
 
-| Field               | Type                             | Notes                                                                          |
-| ------------------- | -------------------------------- | ------------------------------------------------------------------------------ |
-| `id`                | `CustomID`                       | Group ID, unique within the project. Used in entry URLs and results.           |
-| `device`            | `desktop` or `mobile`            | Device class. Mobile covers smartphones and tablets.                           |
-| `contextMode`       | `public`                         | Always `public`                                                                |
-| `tasks`             | `[TaskInput]`                    | Ordered list of tasks                                                          |
-| `returnUrl`         | `String`                         | Template for a custom return URL. See [Custom return URL](#custom-return-url). |
-| `deploymentFilters` | `DeploymentFilterInput`          | Overrides the project's deployment filters for this group                      |
-| `plugins`           | `[SubjectGroupPluginSetupInput]` | Plugins to run in this group (`name` and `options`)                            |
+| Field | Type | Notes |
+| --- | --- | --- |
+| `id` | `CustomID` | Group ID, unique within the project. Used in entry URLs and results. |
+| `device` | `desktop` or `mobile` | Device class. Mobile covers smartphones and tablets. |
+| `contextMode` | `public` | Always `public` |
+| `tasks` | `[TaskInput]` | Ordered list of tasks |
+| `returnUrl` | `String` | Template for a custom return URL. See [Custom return URL](#custom-return-url). |
+| `deploymentFilters` | `DeploymentFilterInput` | Overrides the project's deployment filters for this group |
+| `plugins` | `[SubjectGroupPluginSetupInput]` | Plugins to run in this group (`name` and `options`) |
 
 ## TaskInput
 
-| Field               | Type                                | Used by                   | Notes                                                   |
-| ------------------- | ----------------------------------- | ------------------------- | ------------------------------------------------------- |
-| `id`                | `CustomID`                          | all                       | Task ID, unique within the group. Used in results.      |
-| `type`              | `TASK_TYPES`                        | all                       | `context`, `presenter`, `setup` or `survey`             |
-| `contextType`       | `CONTEXT_TASK_TYPES`                | context                   | See [Supported context types](#supported-context-types) |
-| `presenterType`     | `PRESENTER_TASK_TYPES`              | presenter                 | `tvPlayer` or `onlineSlideshow`                         |
-| `setupType`         | `SETUP_TASK_TYPES`                  | setup                     | `topicSelection`                                        |
-| `data`              | `JSON`                              | context, presenter, setup | Format-specific data                                    |
-| `exposureDuration`  | `Duration` (seconds)                | context                   | Exposure time                                           |
-| `timeout`           | `Duration` (seconds)                | context, presenter, setup | Maximum task duration                                   |
-| `userGuidance`      | `Boolean`                           | context                   | Guide the respondent to the ad                          |
-| `adName`            | `String`                            | context                   | Ad name used in instructions                            |
-| `randomization`     | `Boolean`                           | context, presenter        | Shuffle with other randomized tasks                     |
-| `instructions`      | `TaskInstructionInput`              | context, presenter, setup | See [Instructions](#instructions)                       |
-| `successParameters` | `ContextTaskSuccessParametersInput` | context, presenter        | See [Success evaluation](#success-evaluation)           |
-| `taskEndButton`     | `TaskEndButtonInput`                | context, presenter        | Button that lets respondents end the task early         |
-| `tracking`          | `TaskTrackingInput`                 | context, presenter        | Additional timelines to record                          |
+| Field | Type | Used by | Notes |
+| --- | --- | --- | --- |
+| `id` | `CustomID` | all | Task ID, unique within the group. Used in results. |
+| `type` | `TASK_TYPES` | all | `context`, `presenter`, `setup` or `survey` |
+| `contextType` | `CONTEXT_TASK_TYPES` | context | See [Supported context types](#supported-context-types) |
+| `presenterType` | `PRESENTER_TASK_TYPES` | presenter | `tvPlayer` or `onlineSlideshow` |
+| `setupType` | `SETUP_TASK_TYPES` | setup | `topicSelection` |
+| `data` | `JSON` | context, presenter, setup | Format-specific data |
+| `exposureDuration` | `Duration` (seconds) | context | Exposure time |
+| `timeout` | `Duration` (seconds) | context, presenter, setup | Maximum task duration |
+| `userGuidance` | `Boolean` | context | Guide the respondent to the ad |
+| `adName` | `String` | context | Ad name used in instructions |
+| `randomization` | `Boolean` | context, presenter | Shuffle with other randomized tasks |
+| `instructions` | `TaskInstructionInput` | context, presenter, setup | See [Instructions](#instructions) |
+| `successParameters` | `ContextTaskSuccessParametersInput` | context, presenter | See [Success evaluation](#success-evaluation) |
+| `taskEndButton` | `TaskEndButtonInput` | context, presenter | Button that lets respondents end the task early |
+| `tracking` | `TaskTrackingInput` | context, presenter | Additional timelines to record |
 
 To add eye tracking or emotion tracking, use [plugins](https://github.com/eye-square/docs/blob/master/plugins/plugins.md) on the subject group.
 
@@ -542,12 +484,9 @@ Use the values of the `CONTEXT_TASK_TYPES` enum as `contextType`. Formats are ad
 
 ```graphql
 {
-	__type(name: "CONTEXT_TASK_TYPES") {
-		enumValues {
-			name
-			description
-		}
-	}
+  __type(name: "CONTEXT_TASK_TYPES") {
+    enumValues { name description }
+  }
 }
 ```
 
@@ -595,11 +534,11 @@ Defaults:
 
 Placeholders in pre instructions are replaced at runtime:
 
-| Placeholder    | Replaced with                                                          |
-| -------------- | ---------------------------------------------------------------------- |
+| Placeholder | Replaced with |
+| --- | --- |
 | `{{duration}}` | `exposureDuration` of a context task, or `timeout` of a presenter task |
-| `{{name}}`     | `adName` of a context task                                             |
-| `{{context}}`  | The context of a context task                                          |
+| `{{name}}` | `adName` of a context task |
+| `{{context}}` | The context of a context task |
 
 Custom pre instructions and no post instructions:
 
@@ -618,18 +557,15 @@ Three tasks with no instructions, custom instructions and default instructions:
 
 ```json
 [
-	{ "id": "task-1", "instructions": {} },
-	{
-		"id": "task-2",
-		"instructions": {
-			"pre": {
-				"html": "Please browse the feed for {{duration}} seconds.",
-				"button": "Continue"
-			},
-			"post": { "html": "Thank you.", "button": "Continue" }
-		}
-	},
-	{ "id": "task-3" }
+  { "id": "task-1", "instructions": {} },
+  {
+    "id": "task-2",
+    "instructions": {
+      "pre": { "html": "Please browse the feed for {{duration}} seconds.", "button": "Continue" },
+      "post": { "html": "Thank you.", "button": "Continue" }
+    }
+  },
+  { "id": "task-3" }
 ]
 ```
 
@@ -681,14 +617,14 @@ Send respondents to the group's `entryUrl` from the API. It has this form:
 https://schedule.incontext-research.com/scheduler/entry?ProjectID=<project id>&SubjectGroupID=<group id>
 ```
 
-| Parameter           | Required     | Meaning                                                                                                                                                                                                                                              |
-| ------------------- | ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `ProjectID`         | yes          | Project ID                                                                                                                                                                                                                                           |
-| `SubjectGroupID`    | yes          | Group ID                                                                                                                                                                                                                                             |
-| `UserHash`          | recommended  | Your respondent ID. It becomes the `subjectId` in the results. It must be unique per project; a respondent who comes back with a used `UserHash` sees a "session expired" page, unless re-entry applies (see below). Without it, an ID is generated. |
-| `origin`            | optional     | Base URL of the return link. Without it, the HTTP referrer of the entry request is used.                                                                                                                                                             |
-| `SessionID`         | for resuming | Resumes an existing session, for example after an intermediate survey. The other parameters can then be omitted.                                                                                                                                     |
-| any other parameter | optional     | Passed back unchanged on the return URL                                                                                                                                                                                                              |
+| Parameter | Required | Meaning |
+| --- | --- | --- |
+| `ProjectID` | yes | Project ID |
+| `SubjectGroupID` | yes | Group ID |
+| `UserHash` | recommended | Your respondent ID. It becomes the `subjectId` in the results. It must be unique per project; a respondent who comes back with a used `UserHash` sees a "session expired" page, unless re-entry applies (see below). Without it, an ID is generated. |
+| `origin` | optional | Base URL of the return link. Without it, the HTTP referrer of the entry request is used. |
+| `SessionID` | for resuming | Resumes an existing session, for example after an intermediate survey. The other parameters can then be omitted. |
+| any other parameter | optional | Passed back unchanged on the return URL |
 
 URL-encode all values.
 
@@ -696,13 +632,13 @@ URL-encode all values.
 
 When the respondent reaches a `survey` task or the end of the study, they are sent back to `origin` (or the referrer) with these query parameters, followed by all extra parameters you passed in:
 
-| Parameter         | Values     | Meaning                                                                                                                                                     |
-| ----------------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `success`         | `0` or `1` | Whether the respondent met the [success criteria](#success-evaluation). While the study is still in progress (`sessionFinished=0`) it is provisionally `1`. |
-| `eligible`        | `0` or `1` | Whether the respondent's device and browser met the requirements and the study could run                                                                    |
-| `sessionFinished` | `0` or `1` | `1` when the whole study is finished. `0` on an intermediate return.                                                                                        |
-| `SessionID`       | string     | Session identifier. Store it to resume the session.                                                                                                         |
-| `previousTask`    | task ID    | The task before the return                                                                                                                                  |
+| Parameter | Values | Meaning |
+| --- | --- | --- |
+| `success` | `0` or `1` | Whether the respondent met the [success criteria](#success-evaluation). While the study is still in progress (`sessionFinished=0`) it is provisionally `1`. |
+| `eligible` | `0` or `1` | Whether the respondent's device and browser met the requirements and the study could run |
+| `sessionFinished` | `0` or `1` | `1` when the whole study is finished. `0` on an intermediate return. |
+| `SessionID` | string | Session identifier. Store it to resume the session. |
+| `previousTask` | task ID | The task before the return |
 
 Use `success` for quality filtering only when `sessionFinished=1`.
 
@@ -740,15 +676,15 @@ After a task, the recorded metrics are compared with the task's **success parame
 
 ## Success parameters
 
-| Field           | Type           | Passes when                                                                                                             |
-| --------------- | -------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| `visible`       | `Int` (ms)     | The element was visible for longer than this many milliseconds (`visibility_Duration`). `1` means "was visible at all". |
-| `played`        | `Int` (ms)     | The video played for longer than this many milliseconds (`playback_Duration`)                                           |
-| `percentPlayed` | `0` to `100`   | The video played for more than this share of the task's main video length                                               |
-| `loaded`        | `Boolean`      | The element was loaded (`loaded_Time` is set)                                                                           |
-| `elements`      | list           | Separate conditions per tracked element. See below.                                                                     |
-| `matchBehavior` | `ANY` or `ALL` | How several matching elements are combined. See below.                                                                  |
-| `min`           | `Int`          | Minimum number of matching elements. Default `1`.                                                                       |
+| Field | Type | Passes when |
+| --- | --- | --- |
+| `visible` | `Int` (ms) | The element was visible for longer than this many milliseconds (`visibility_Duration`). `1` means "was visible at all". |
+| `played` | `Int` (ms) | The video played for longer than this many milliseconds (`playback_Duration`) |
+| `percentPlayed` | `0` to `100` | The video played for more than this share of the task's main video length |
+| `loaded` | `Boolean` | The element was loaded (`loaded_Time` is set) |
+| `elements` | list | Separate conditions per tracked element. See below. |
+| `matchBehavior` | `ANY` or `ALL` | How several matching elements are combined. See below. |
+| `min` | `Int` | Minimum number of matching elements. Default `1`. |
 
 Without `elements`, the conditions apply to every tracked element of the task. With `elements`, each entry is evaluated on its own, using only the fields inside that entry. Put `matchBehavior` and `min` inside each element in that case: top-level fields are ignored when `elements` is set.
 
@@ -756,11 +692,11 @@ Each element entry selects tracked elements with `id` and `type` patterns. Patte
 
 `matchBehavior`:
 
-| Value   | Passes when                                                                     |
-| ------- | ------------------------------------------------------------------------------- |
-| not set | At least `min` elements match, and every matching element meets the condition   |
-| `ANY`   | At least `min` matching elements meet the condition. Others may fail.           |
-| `ALL`   | Every element the setup expects was tracked, and all of them meet the condition |
+| Value | Passes when |
+| --- | --- |
+| not set | At least `min` elements match, and every matching element meets the condition |
+| `ANY` | At least `min` matching elements meet the condition. Others may fail. |
+| `ALL` | Every element the setup expects was tracked, and all of them meet the condition |
 
 If no element matching an entry was recorded, the task does not pass. Empty success parameters (`{}`) switch the success check off. Basic plausibility checks on the recorded data still apply to every task and can mark it unsuccessful.
 
@@ -788,9 +724,9 @@ When a task has no `successParameters`, the organization default for its format 
 
 ```graphql
 {
-	settings {
-		successParameters
-	}
+  settings {
+    successParameters
+  }
 }
 ```
 
@@ -800,24 +736,24 @@ Excerpt of a response:
 
 ```json
 {
-	"data": {
-		"settings": {
-			"successParameters": {
-				"facebook-newsfeed-video-autoplay": {
-					"ug": { "percentPlayed": 90 },
-					"noUg": { "visible": 1 }
-				},
-				"facebook-stories-static": {
-					"ug": { "elements": [{ "id": "story-0", "visible": 1 }] },
-					"noUg": { "elements": [{ "id": "story-0", "visible": 1 }] }
-				},
-				"youtube-preroll": {
-					"ug": { "played": 5000 },
-					"noUg": { "visible": 1 }
-				}
-			}
-		}
-	}
+  "data": {
+    "settings": {
+      "successParameters": {
+        "facebook-newsfeed-video-autoplay": {
+          "ug": { "percentPlayed": 90 },
+          "noUg": { "visible": 1 }
+        },
+        "facebook-stories-static": {
+          "ug": { "elements": [{ "id": "story-0", "visible": 1 }] },
+          "noUg": { "elements": [{ "id": "story-0", "visible": 1 }] }
+        },
+        "youtube-preroll": {
+          "ug": { "played": 5000 },
+          "noUg": { "visible": 1 }
+        }
+      }
+    }
+  }
 }
 ```
 
@@ -829,40 +765,22 @@ An empty entry (`{}`), as for the control formats, means there is no default suc
 
 Metrics and timelines are fields of a project. Both accept the same filters, which can be combined:
 
-| Argument                 | Meaning                                                                                  |
-| ------------------------ | ---------------------------------------------------------------------------------------- |
-| `subjectGroup: CustomID` | Only this group                                                                          |
-| `task: CustomID`         | Only this task ID. Task IDs can repeat across groups, so combine it with `subjectGroup`. |
-| `subject: String`        | Only this respondent (`UserHash`)                                                        |
+| Argument | Meaning |
+| --- | --- |
+| `subjectGroup: CustomID` | Only this group |
+| `task: CustomID` | Only this task ID. Task IDs can repeat across groups, so combine it with `subjectGroup`. |
+| `subject: String` | Only this respondent (`UserHash`) |
 
 ```graphql
 {
-	project(id: "2026-10_AB001") {
-		metrics(
-			first: 10
-			subjectGroup: "fb-desktop"
-			task: "exposure"
-			subject: "RESPONDENT_ID"
-		) {
-			nodes {
-				subjectGroupId
-				taskId
-				subjectId
-			}
-		}
-		timelines(
-			first: 10
-			subjectGroup: "fb-desktop"
-			task: "exposure"
-			subject: "RESPONDENT_ID"
-		) {
-			nodes {
-				subjectGroupId
-				taskId
-				subjectId
-			}
-		}
-	}
+  project(id: "2026-10_AB001") {
+    metrics(first: 10, subjectGroup: "fb-desktop", task: "exposure", subject: "RESPONDENT_ID") {
+      nodes { subjectGroupId taskId subjectId }
+    }
+    timelines(first: 10, subjectGroup: "fb-desktop", task: "exposure", subject: "RESPONDENT_ID") {
+      nodes { subjectGroupId taskId subjectId }
+    }
+  }
 }
 ```
 
@@ -872,32 +790,24 @@ A metric set holds the metrics of one respondent in one task. It contains **elem
 
 ```json
 {
-	"subjectGroupId": "fb-desktop",
-	"taskId": "exposure",
-	"subjectId": "RESPONDENT_ID",
-	"elements": {
-		"nodes": [
-			{
-				"id": "carousel-container",
-				"type": "facebook-post-carousel",
-				"metrics": {
-					"nodes": [
-						{
-							"name": "loaded_Time",
-							"value": "1326",
-							"timestamp": "1791993361701"
-						},
-						{
-							"name": "visibility_Duration",
-							"value": "7001",
-							"timestamp": "1791993363872"
-						},
-						{ "name": "actionUrl_ClickTime", "value": null, "timestamp": null }
-					]
-				}
-			}
-		]
-	}
+  "subjectGroupId": "fb-desktop",
+  "taskId": "exposure",
+  "subjectId": "RESPONDENT_ID",
+  "elements": {
+    "nodes": [
+      {
+        "id": "carousel-container",
+        "type": "facebook-post-carousel",
+        "metrics": {
+          "nodes": [
+            { "name": "loaded_Time", "value": "1326", "timestamp": "1791993361701" },
+            { "name": "visibility_Duration", "value": "7001", "timestamp": "1791993363872" },
+            { "name": "actionUrl_ClickTime", "value": null, "timestamp": null }
+          ]
+        }
+      }
+    ]
+  }
 }
 ```
 
@@ -912,41 +822,30 @@ A timeline is a sequence of timestamped events of one respondent in one task, fo
 
 ```graphql
 {
-	project(id: "2026-10_AB001") {
-		timelines(first: 10) {
-			nodes {
-				subjectGroupId
-				taskId
-				subjectId
-				timelines {
-					StimulusSequenceHost(first: 10) {
-						nodes {
-							Timestamp
-							StimulusID
-						}
-					}
-					Interact(first: 100) {
-						nodes {
-							Timestamp
-							Value
-							EventType
-						}
-					}
-				}
-			}
-		}
-	}
+  project(id: "2026-10_AB001") {
+    timelines(first: 10) {
+      nodes {
+        subjectGroupId
+        taskId
+        subjectId
+        timelines {
+          StimulusSequenceHost(first: 10) { nodes { Timestamp StimulusID } }
+          Interact(first: 100) { nodes { Timestamp Value EventType } }
+        }
+      }
+    }
+  }
 }
 ```
 
 TV player tasks record these timelines:
 
-| Timeline               | Events                                                                                                                      |
-| ---------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| `StimulusSequence`     | A video started playing visibly (`StimulusID` is the video ID)                                                              |
-| `StimulusSequenceHost` | Task start and end (`StimulusID` is `TaskStart` or `TaskEnd`)                                                               |
-| `Interact`             | The respondent switched channels (`EventType: zapping`, `Value` is the video that was playing)                              |
-| `CustomEvent`          | Playback stopped, failed to restart or resumed, for example on a bad connection (`Name` is the video, `Value` is the event) |
+| Timeline | Events |
+| --- | --- |
+| `StimulusSequence` | A video started playing visibly (`StimulusID` is the video ID) |
+| `StimulusSequenceHost` | Task start and end (`StimulusID` is `TaskStart` or `TaskEnd`) |
+| `Interact` | The respondent switched channels (`EventType: zapping`, `Value` is the video that was playing) |
+| `CustomEvent` | Playback stopped, failed to restart or resumed, for example on a bad connection (`Name` is the video, `Value` is the event) |
 
 ```json
 "StimulusSequence": {
@@ -970,13 +869,11 @@ TV player tasks record these timelines:
 
 ```graphql
 {
-	settings {
-		allowReentry # default for new projects
-		successParameters # default success parameters per format
-		watermark {
-			mode
-		} # default watermark
-	}
+  settings {
+    allowReentry          # default for new projects
+    successParameters     # default success parameters per format
+    watermark { mode }    # default watermark
+  }
 }
 ```
 
@@ -984,10 +881,10 @@ TV player tasks record these timelines:
 
 # Changelog
 
-| Date    | Change                                                                                                                                                                                                                |
-| ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Date | Change |
+| --- | --- |
 | 2026-10 | Page rewritten: quickstart, current roles and error format, return URL parameters, success parameter rules, reading context types and default success parameters from the schema. Removed the deprecated token login. |
-| 2026-07 | API secrets managed in the Accounts app                                                                                                                                                                               |
+| 2026-07 | API secrets managed in the Accounts app |
 
 ---
 

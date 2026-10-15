@@ -18,6 +18,7 @@ Related guides: [survey integration](https://incontext-research.com/docs/surveyi
 - [Concepts](#concepts)
 - [Authentication](#authentication)
 - [Making requests](#making-requests)
+- [Using the explorer](#using-the-explorer)
 - [Pagination](#pagination)
 - [Errors](#errors)
 - [Task data and format discovery](#task-data-and-format-discovery)
@@ -82,23 +83,7 @@ List the available context types and look at the data a format needs:
 }
 ```
 
-Ask for a ready-made group template to see the defaults and the supported devices for a format and task sequence:
-
-```graphql
-{
-  subjectGroupTemplate(contextType: facebookNewsfeedVideoAutoplay, taskSequence: TASK) {
-    devices
-    description
-    template {
-      device
-      contextMode
-      tasks { nodes { type ... on ContextTask { contextType timeout exposureDuration userGuidance } } }
-    }
-  }
-}
-```
-
-[Open in explorer](https://portal.incontext-research.com/docs/explorer?query=%7B%0A++subjectGroupTemplate%28contextType%3A+facebookNewsfeedVideoAutoplay%2C+taskSequence%3A+TASK%29+%7B%0A++++devices%0A++++description%0A++++template+%7B%0A++++++device%0A++++++contextMode%0A++++++tasks+%7B+nodes+%7B+type+...+on+ContextTask+%7B+contextType+timeout+exposureDuration+userGuidance+%7D+%7D+%7D%0A++++%7D%0A++%7D%0A%7D%0A&variables=)
+You can also browse these types without writing queries: open **Docs** in the [explorer](#using-the-explorer) and search for the type name.
 
 ## Step 4 Create a project
 
@@ -232,7 +217,7 @@ Key task settings:
 
 | Field | Meaning |
 | --- | --- |
-| `exposureDuration` | Seconds the respondent can be exposed to the context. The task ends when it runs out. |
+| `exposureDuration` | Seconds the respondent can be exposed to the ad within a context. The task ends when it runs out. |
 | `timeout` | Maximum task duration in seconds. If no exposure duration is set, the task ends after the timeout. |
 | `userGuidance` | Guides the respondent to the test ad: newsfeeds scroll to the ad and lock navigation, stories open the ad directly, YouTube ends the task after the pre-roll. |
 | `randomization` | Tasks with randomization enabled are shuffled among each other. |
@@ -265,11 +250,9 @@ The schema you see depends on how you are authenticated, so introspect with the 
 
 ## Team and organization secrets
 
-A team secret reads and creates projects of its team. An organization secret works across the organization's teams: `projects` and `projectCreate` accept optional `organizationId` and `teamId` arguments, and new projects go to the organization's default team when no team is given. Use `organization { id name }` and `organizationTeam { id name }` to look up the IDs.
+A team secret reads and creates projects of its team. An organization secret works across the organization's teams: `projects` and `projectCreate` accept optional `organizationId` and `teamId` arguments, and new projects go to the organization's default team when no team is given. The IDs are currently returned by `organization { id name }` and `organizationTeam { id name }`.
 
-## Portal login in the explorer
-
-The explorer can send requests either with your Portal login or with an API secret that you paste in. Pick the credential in the dropdown next to the editor and test with the same kind of credential your integration will use.
+## Token login
 
 The older email and password token login (`/v4/auth`) is deprecated. Use API secrets for all integrations.
 
@@ -292,11 +275,9 @@ The root operations are:
 | Operation | Purpose |
 | --- | --- |
 | `me` | Current identity and role |
-| `organization`, `organizationTeam` | Your organization and team |
 | `project(id)` | One project, including its groups, tasks, metrics and timelines |
 | `projects(first, last, after, before, organizationId, teamId)` | All projects you can access, oldest first |
 | `search(type: PROJECT, query, first, ...)` | Text search across your projects |
-| `subjectGroupTemplate(contextType, taskSequence)` | Default group setup and supported devices for a format |
 | `settings` | Organization defaults, for example success parameters |
 | `plugins`, `plugin`, `pluginInstallations`, `pluginInstallation` | Available and installed plugins |
 | `projectCreate(data, organizationId, teamId)` | Create a project (mutation) |
@@ -307,6 +288,22 @@ There are no subscriptions, and the API does not upload media: host images and v
 ## Updating a project
 
 `projectUpdate` takes a full `ProjectInput`. Read the project first, change what you need, and send back `description`, `language` and the complete `subjectGroups` list: the groups you send replace the existing ones. Read-only fields that appear in query results (for example `entryUrl`, or the `width` and `height` of images) are not accepted as input, so remove them before sending.
+
+---
+
+# Using the explorer
+
+The [explorer](https://portal.incontext-research.com/docs/explorer) is an interactive GraphQL editor (GraphiQL) in the Portal. It is the easiest way to learn the schema and to see how nested data, for example `subjectGroups` and their `tasks`, or `metrics` with their `elements`, is structured before you write code.
+
+1. Sign in to the Portal and open [portal.incontext-research.com/docs/explorer](https://portal.incontext-research.com/docs/explorer).
+2. In the toolbar, choose **user credentials** (your Portal login) or **access secret** and paste an API secret. The schema depends on the credential, so test with the same kind of credential your integration will use.
+3. Click **Docs** at the top right to browse the schema. Start at `Query` or `Mutation` and click through fields and types, or search for a type such as `ProjectInput` or `ContextTaskDataFacebookNewsfeedStatic`. Each field shows its type and description.
+4. Write a query in the left pane. Press Ctrl-Space for autocomplete, hover a field to see its description, and use **Prettify** to format the query.
+5. Run it with Ctrl-Enter or the play button. The result appears on the right with the same nesting as your query, so you can add fields level by level and see what each one returns.
+
+**Examples** in the toolbar loads ready-made queries and **History** lists your earlier ones. The query and variables are kept in the page URL, so you can bookmark or share a query. The "Open in explorer" links on this page work that way.
+
+The `data` field of a task is JSON, so the explorer cannot autocomplete inside it. See [Task data and format discovery](#task-data-and-format-discovery).
 
 ---
 
@@ -364,7 +361,7 @@ query Page($after: Cursor) {
 
 GraphQL errors are returned with HTTP status `200` in the `errors` array of the response, next to any `data` that could still be resolved. Always check `errors` before using `data`.
 
-Each error has a `type`, a `message` and a nested list of `errors`, each with an `origin`: the path to the field that caused it. A string in the path is a property name and a number is a list index.
+Each error has a `type`, a `message` and a nested list of `errors`. An entry can have an `origin`: the path to the input field that caused it. A string in the path is a property name and a number is a list index.
 
 ```json
 {
@@ -389,6 +386,8 @@ Each error has a `type`, a `message` and a nested list of `errors`, each with an
 ```
 
 The first origin above points to `data.subjectGroups[0].tasks[0].data.mediaSrc`. All validation problems of a request are reported together.
+
+`origin` is optional. It is only set when the error can point at a specific part of your input: `InvalidDataError` entries always have it, `ClientError` and `GraphQLError` entries sometimes. An `InternalServerError` can have causes unrelated to your input and does not point at an origin. Expect `origin` to be missing or an empty list.
 
 | `type` | Cause | What to do |
 | --- | --- | --- |
@@ -423,8 +422,6 @@ Media rules that apply to most formats:
 - Videos: `{ "videoUrl": "https://..." }`, `.mp4`.
 - URLs must use HTTPS and be publicly reachable when you create or update the project.
 - Query results add read-only fields such as `width`, `height` or `length`. Remove them before reusing a task as input.
-
-Not every format supports both devices. Check `subjectGroupTemplate(...) { devices }` before creating a group: a mismatch is rejected with `given device is not supported for given task`.
 
 ---
 
@@ -475,78 +472,29 @@ Project IDs are generated when you create a project. You cannot choose them.
 | `instructions` | `TaskInstructionInput` | context, presenter, setup | See [Instructions](#instructions) |
 | `successParameters` | `ContextTaskSuccessParametersInput` | context, presenter | See [Success evaluation](#success-evaluation) |
 | `taskEndButton` | `TaskEndButtonInput` | context, presenter | Button that lets respondents end the task early |
-| `eyeTracking` | `TaskEyeTrackingInput` | context, presenter | Webcam eye tracking with a calibration step |
-| `emotionTracking` | `TaskEmotionTrackingInput` | context, presenter | Facial emotion tracking |
 | `tracking` | `TaskTrackingInput` | context, presenter | Additional timelines to record |
+
+To add eye tracking or emotion tracking, use [plugins](https://github.com/eye-square/docs/blob/master/plugins/plugins.md) on the subject group.
 
 ---
 
 # Supported context types
 
-Use these values as `contextType`. Formats marked "control" show the platform without any test ad, for control groups. For X, the API identifiers keep their original `twitter` prefix.
+Use the values of the `CONTEXT_TASK_TYPES` enum as `contextType`. Formats are added over time, so read the current list from the schema:
 
-| Platform | `contextType` | Format |
-| --- | --- | --- |
-| Facebook | `facebookControl` | Facebook control: Facebook context without any ad. |
-| Facebook | `facebookMultiple` | Facebook multi ad setup: Injects multiple ads into the Facebook newsfeed. |
-| Facebook | `facebookNewsfeedCarousel` | Facebook feed carousel ad: Injects a carousel ad into the Facebook newsfeed. |
-| Facebook | `facebookNewsfeedMidroll` | Facebook feed mid roll ad: Injects a content video together with a mid roll ad into the Facebook newsfeed. |
-| Facebook | `facebookNewsfeedStatic` | Facebook feed image ad: Injects a static image ad into the Facebook newsfeed. |
-| Facebook | `facebookNewsfeedVideoAutoplay` | Facebook feed video ad: Injects a video ad into the Facebook newsfeed. |
-| Facebook | `facebookStoriesCarousel` | Facebook stories carousel ad: Injects a carousel (up to three combined ads) ad into Facebook stories. |
-| Facebook | `facebookStoriesContent` | Facebook stories content: Injects a content post into Facebook stories. |
-| Facebook | `facebookStoriesStatic` | Facebook stories image ad: Injects a static image ad into the Facebook stories. |
-| Facebook | `facebookStoriesVideo` | Facebook stories video ad: Injects a video ad into the Facebook stories. |
-| Instagram | `instagramControl` | Instagram control: Instagram context without any ad. |
-| Instagram | `instagramMultiple` | Instagram multi ad setup: Injects multiple ads into the Instagram newsfeed. |
-| Instagram | `instagramNewsfeedCarousel` | Instagram feed carousel ad: Injects a carousel ad into the Instagram newsfeed. |
-| Instagram | `instagramNewsfeedStatic` | Instagram feed image ad: Injects a static image into the Instagram newsfeed. |
-| Instagram | `instagramNewsfeedVideoAutoplay` | Instagram feed video ad: Injects a video into the Instagram newsfeed. |
-| Instagram | `instagramReelsInfeedVideo` | Instagram reels infeed video ad: Injects a video ad into Instagram reels. |
-| Instagram | `instagramStoriesCarousel` | Instagram stories carousel ad: Injects a carousel (up to three combined ads) ad into Instagram stories. |
-| Instagram | `instagramStoriesContent` | Instagram stories content: Injects a content post into Instagram stories. |
-| Instagram | `instagramStoriesStatic` | Instagram stories image ad: Injects a static image ad into the Instagram stories. |
-| Instagram | `instagramStoriesVideo` | Instagram stories video ad: Injects a video ad into the Instagram stories. |
-| LinkedIn | `linkedinControl` | LinkedIn control: LinkedIn context without any ad. |
-| LinkedIn | `linkedinNewsfeedCarousel` | LinkedIn feed carousel ad: Injects a carousel ad into the LinkedIn newsfeed. |
-| LinkedIn | `linkedinNewsfeedStatic` | LinkedIn feed image ad: Injects a static image ad into the LinkedIn newsfeed. |
-| LinkedIn | `linkedinNewsfeedVideo` | LinkedIn feed video ad: Injects a video ad into the LinkedIn newsfeed. |
-| Snapchat | `snapchatCarousel` | Snapchat discovery carousel ad: Injects a carousel (up to three combined ads) ad into Snapchat stories. |
-| Snapchat | `snapchatInlineStatic` | Snapchat discovery inline image ad: Injects a static image ad into the currently viewed Snapchat story. |
-| Snapchat | `snapchatInlineVideo` | Snapchat discovery inline video ad: Injects a video ad into the currently viewed Snapchat story. |
-| Snapchat | `snapchatMultiple` | Snapchat multi ad setup: Injects multiple ads into the Snapchat feed. |
-| Snapchat | `snapchatSpotlightInfeedVideo` | Snapchat spotlight infeed video ad: Injects a video ad into the Snapchat spotlight feed. |
-| Snapchat | `snapchatStatic` | Snapchat discovery image ad: Injects a static image ad into the Snapchat stories. |
-| Snapchat | `snapchatVideo` | Snapchat discovery video ad: Injects a video ad into the Snapchat stories. |
-| TikTok | `tiktokBrandTakeoverStatic` | TikTok brand takeover static: Displays an image in fullscreen mode before showing a TikTok feed. |
-| TikTok | `tiktokBrandTakeoverVideo` | TikTok brand takeover video: Displays a video in fullscreen mode before showing a TikTok feed. |
-| TikTok | `tiktokControl` | TikTok control: TikTok context without any ad. |
-| TikTok | `tiktokInfeedVideo` | TikTok infeed video: Injects a video ad into a TikTok feed. |
-| TikTok | `tiktokMultiple` | TikTok multi ad setup: Injects multiple ads into the TikTok feed. |
-| TikTok | `tiktokTopviewVideo` | TikTok topview video: Injects a video ad at the top of a TikTok feed. |
-| X | `twitterControl` | X control: X context without any ad. |
-| X | `twitterNewsfeedStatic` | X feed image ad: Injects a static image into the X newsfeed. |
-| X | `twitterNewsfeedVideoAutoplay` | X feed video ad: Injects a video into the X newsfeed. |
-| YouTube | `youtubeContent` | YouTube content ad: Displays a thumbnail between suggested videos on the homepage, which opens a tracked content video. |
-| YouTube | `youtubeControl` | YouTube control: Shows the YouTube context without any ad. |
-| YouTube | `youtubeMultiple` | YouTube multi ad setup: Displays multiple ads before YouTube videos. |
-| YouTube | `youtubePods` | YouTube pods: Displays a pod before a YouTube video. |
-| YouTube | `youtubePreroll` | YouTube preroll ad: Displays a preroll ad before a YouTube video. |
-| YouTube | `youtubeShortsContent` | YouTube shorts content ad: Injects a content video into the YouTube shorts feed. |
-| YouTube | `youtubeShortsInfeed` | YouTube shorts infeed ad: Injects a video ad into YouTube shorts feed. |
-| Youku | `youkuControl` | Youku control: Shows the Youku context without any ad. |
-| Youku | `youkuPreroll` | Youku preroll ad: Displays a preroll ad before a Youku video. |
-| News site | `newsControl` | News control: Displays a generic news website. |
-| News site | `newsMultiple` | News multiple: Displays a generic news website with one or multiple ads. |
-| Websites | `websitesControl` | Websites control: Displays a static website without any ads. |
-| Websites | `websitesHomepageStatic` | Websites homepage image ad: Injects an image into a static website. |
-| Websites | `websitesHomepageVideo` | Websites homepage video ad: Injects a video into a static website. |
-| Websites | `websitesMultiple` | Websites multiple: Displays a static website with one or multiple ads. |
-| E-commerce | `ecommerceStoreMultiple` | E-commerce store: Injects products into a replica online store. |
-| Slides | `slides` | Slides: Sequence of images or videos. |
-| Page builder | `builderMultiple` | Page builder: Runs one or more custom pages. |
+```graphql
+{
+  __type(name: "CONTEXT_TASK_TYPES") {
+    enumValues { name description }
+  }
+}
+```
 
-Format details and examples: [supported ad formats](https://incontext-research.com/docs/adsupport/). The live list is always available through `__type(name: "CONTEXT_TASK_TYPES")`.
+[Open in explorer](https://portal.incontext-research.com/docs/explorer?query=%7B%0A++__type%28name%3A+%22CONTEXT_TASK_TYPES%22%29+%7B%0A++++enumValues+%7B+name+description+%7D%0A++%7D%0A%7D%0A&variables=)
+
+Most values are the platform followed by the format, for example `facebookNewsfeedVideoAutoplay` (Facebook feed video ad), `instagramStoriesStatic` (Instagram stories image ad) or `youtubePreroll` (YouTube preroll ad). The `description` of each value names the format and where the ad is placed. Values ending in `Control`, such as `facebookControl`, show the platform without any test ad, for control groups. For X, the identifiers keep their original `twitter` prefix, for example `twitterNewsfeedStatic`.
+
+Format details and examples: [supported ad formats](https://incontext-research.com/docs/adsupport/).
 
 ---
 
@@ -774,58 +722,42 @@ The first story was visible:
 
 When a task has no `successParameters`, the organization default for its format is used, depending on whether user guidance is enabled. Parameters set on a task replace the default completely; they are not merged with it. Your organization's current defaults are returned by `settings { successParameters }`, keyed by format name in kebab case (for example `facebook-newsfeed-static`) with `ug` (guided) and `noUg` (not guided) entries.
 
-Platform defaults:
+```graphql
+{
+  settings {
+    successParameters
+  }
+}
+```
 
-| `contextType` | With user guidance | Without user guidance |
-| --- | --- | --- |
-| `facebookMultiple` | `{"loaded":true}` | `{"loaded":true}` |
-| `facebookNewsfeedCarousel` | `{"elements":[{"id":"carousel-container","visible":1}]}` | `{"elements":[{"id":"carousel-container","visible":1}]}` |
-| `facebookNewsfeedMidroll` | `{"elements":[{"id":"midroll-*-item-0","percentPlayed":90}]}` | `{"elements":[{"id":"post-*","visible":1}]}` |
-| `facebookNewsfeedStatic` | `{"visible":1}` | `{"visible":1}` |
-| `facebookNewsfeedVideoAutoplay` | `{"percentPlayed":90}` | `{"visible":1}` |
-| `facebookStoriesCarousel` | `{"elements":[{"id":"story-0","visible":1}]}` | `{"elements":[{"id":"story-0","visible":1}]}` |
-| `facebookStoriesContent` | `{"elements":[{"id":"story-0","visible":1}]}` | `{"elements":[{"id":"story-0","visible":1}]}` |
-| `facebookStoriesStatic` | `{"elements":[{"id":"story-0","visible":1}]}` | `{"elements":[{"id":"story-0","visible":1}]}` |
-| `facebookStoriesVideo` | `{"elements":[{"id":"story-0","visible":1}]}` | `{"elements":[{"id":"story-0","visible":1}]}` |
-| `instagramMultiple` | `{"loaded":true}` | `{"loaded":true}` |
-| `instagramNewsfeedCarousel` | `{"elements":[{"id":"carousel-container","visible":1}]}` | `{"elements":[{"id":"carousel-container","visible":1}]}` |
-| `instagramNewsfeedStatic` | `{"visible":1}` | `{"visible":1}` |
-| `instagramNewsfeedVideoAutoplay` | `{"percentPlayed":90}` | `{"visible":1}` |
-| `instagramReelsInfeedVideo` | `{"percentPlayed":90}` | `{"visible":1}` |
-| `instagramStoriesCarousel` | `{"elements":[{"id":"story-0","visible":1}]}` | `{"elements":[{"id":"story-0","visible":1}]}` |
-| `instagramStoriesContent` | `{"elements":[{"id":"story-0","visible":1}]}` | `{"elements":[{"id":"story-0","visible":1}]}` |
-| `instagramStoriesStatic` | `{"elements":[{"id":"story-0","visible":1}]}` | `{"elements":[{"id":"story-0","visible":1}]}` |
-| `instagramStoriesVideo` | `{"elements":[{"id":"story-0","visible":1}]}` | `{"elements":[{"id":"story-0","visible":1}]}` |
-| `linkedinNewsfeedCarousel` | `{"elements":[{"id":"carousel-container","visible":1}]}` | `{"elements":[{"id":"carousel-container","visible":1}]}` |
-| `linkedinNewsfeedStatic` | `{"visible":1}` | `{"visible":1}` |
-| `linkedinNewsfeedVideo` | `{"percentPlayed":90}` | `{"visible":1}` |
-| `newsMultiple` | `{"loaded":true}` | `{"loaded":true}` |
-| `snapchatCarousel` | `{"elements":[{"id":"story-0","visible":1}]}` | `{"elements":[{"id":"story-0","visible":1}]}` |
-| `snapchatInlineStatic` | `{"visible":1}` | `{"visible":1}` |
-| `snapchatInlineVideo` | `{"visible":1}` | `{"visible":1}` |
-| `snapchatMultiple` | `{"loaded":true}` | `{"loaded":true}` |
-| `snapchatSpotlightInfeedVideo` | `{"percentPlayed":90}` | `{"visible":1}` |
-| `snapchatStatic` | `{"elements":[{"id":"story-0","visible":1}]}` | `{"elements":[{"id":"story-0","visible":1}]}` |
-| `snapchatVideo` | `{"elements":[{"id":"story-0","visible":1}]}` | `{"elements":[{"id":"story-0","visible":1}]}` |
-| `tiktokBrandTakeoverStatic` | `{"elements":[{"id":"tiktok-post","visible":1}]}` | `{"elements":[{"id":"tiktok-post","visible":1}]}` |
-| `tiktokBrandTakeoverVideo` | `{"elements":[{"id":"tiktok-post","percentPlayed":90}]}` | `{"elements":[{"id":"tiktok-post","visible":1}]}` |
-| `tiktokInfeedVideo` | `{"elements":[{"id":"tiktok-post","percentPlayed":90}]}` | `{"elements":[{"id":"tiktok-post","visible":1}]}` |
-| `tiktokMultiple` | `{"loaded":true}` | `{"loaded":true}` |
-| `tiktokTopviewVideo` | `{"elements":[{"id":"tiktok-post","percentPlayed":90}]}` | `{"elements":[{"id":"tiktok-post","visible":1}]}` |
-| `twitterNewsfeedStatic` | `{"visible":1}` | `{"visible":1}` |
-| `twitterNewsfeedVideoAutoplay` | `{"percentPlayed":90}` | `{"visible":1}` |
-| `websitesHomepageStatic` | `{"visible":1}` | `{"visible":1}` |
-| `websitesHomepageVideo` | `{"visible":1}` | `{"visible":1}` |
-| `websitesMultiple` | `{"loaded":true}` | `{"loaded":true}` |
-| `youkuPreroll` | `{"visible":1}` | `{"visible":1}` |
-| `youtubeContent` | `{"loaded":true}` | `{"loaded":true}` |
-| `youtubeMultiple` | `{"loaded":true}` | `{"loaded":true}` |
-| `youtubePods` | `{"played":5000}` | `{"visible":1}` |
-| `youtubePreroll` | `{"played":5000}` | `{"visible":1}` |
-| `youtubeShortsContent` | `{"percentPlayed":90}` | `{"visible":1}` |
-| `youtubeShortsInfeed` | `{"percentPlayed":90}` | `{"visible":1}` |
+[Open in explorer](https://portal.incontext-research.com/docs/explorer?query=%7B%0A++settings+%7B%0A++++successParameters%0A++%7D%0A%7D%0A&variables=)
 
-Control formats, `slides`, `builderMultiple`, `ecommerceStoreMultiple` and the presenter types have no default success parameters, so only the plausibility checks apply unless you set your own.
+Excerpt of a response:
+
+```json
+{
+  "data": {
+    "settings": {
+      "successParameters": {
+        "facebook-newsfeed-video-autoplay": {
+          "ug": { "percentPlayed": 90 },
+          "noUg": { "visible": 1 }
+        },
+        "facebook-stories-static": {
+          "ug": { "elements": [{ "id": "story-0", "visible": 1 }] },
+          "noUg": { "elements": [{ "id": "story-0", "visible": 1 }] }
+        },
+        "youtube-preroll": {
+          "ug": { "played": 5000 },
+          "noUg": { "visible": 1 }
+        }
+      }
+    }
+  }
+}
+```
+
+An empty entry (`{}`), as for the control formats, means there is no default success check, so only the plausibility checks apply unless you set your own `successParameters`.
 
 ---
 
@@ -951,7 +883,7 @@ TV player tasks record these timelines:
 
 | Date | Change |
 | --- | --- |
-| 2026-10 | Page rewritten: quickstart, current roles and error format, return URL parameters, success parameter rules and current defaults, complete list of context types. Removed the deprecated token login. |
+| 2026-10 | Page rewritten: quickstart, current roles and error format, return URL parameters, success parameter rules, reading context types and default success parameters from the schema. Removed the deprecated token login. |
 | 2026-07 | API secrets managed in the Accounts app |
 
 ---

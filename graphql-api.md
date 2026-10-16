@@ -529,8 +529,6 @@ Custom pre instructions and no post instructions:
 }
 ```
 
-![custom instructions](https://portal.incontext-research.com/images/docs/custom-instructions.png)
-
 Three tasks with no instructions, custom instructions and default instructions:
 
 ```json

@@ -6,8 +6,6 @@
 
 Public documentation for the In Context API and plugins.
 
-## What is in here and where it shows up
-
 | File | Description |
 | --- | --- |
 | [graphql-api.md](./graphql-api.md) | Reference for the In Context GraphQL API (v4): authentication with API secrets, a quickstart, creating projects, sending respondents from a survey, success evaluation, and reading results and metrics. |

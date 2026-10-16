@@ -13,5 +13,3 @@ Public documentation for the In Context API and plugins.
 | [plugins/client-scripts-api.md](./plugins/client-scripts-api.md) | How to run your own scripts inside a task: lifecycle hooks, jobs, the events a task emits, and tracking your own elements. |
 | [plugins/script-development.md](./plugins/script-development.md) | How to serve a script from a local server (http-server or Vite) while you develop it. |
 | [plugins/webhooks.md](./plugins/webhooks.md) | How to receive In Context events on your own endpoint, validate their signature, and what each event payload contains. |
-
-`graphql-api.md` is also shown on the **API v4** page of the Portal, [portal.incontext-research.com/docs/api-v4](https://portal.incontext-research.com/docs/api-v4) (Portal login required), which loads it from `master`. A merge to `master` is live there within about five minutes.

@@ -9,6 +9,11 @@
 - [Setting up a development environment](./script-development.md)
 - [Setting Up Hooks](#setting-up-hooks)
 - [Jobs](#jobs)
+  - [context](#context)
+  - [channel](#channel)
+  - [state](#state)
+  - [render](#render)
+  - [utils](#utils)
 - [Event Objects](#event-objects)
   - [Filtering Events](#filtering-events)
   - [Event List](#event-list)
@@ -72,11 +77,63 @@ A job is just a function that receives a single argument:
 window.setTaskHook('recording', ({ context, channel, state }) => {});
 ```
 
-The argument consists of the following fields
+The argument consists of the following fields:
 
-- `context` is an immutable object that holds the current task and session configuration.
+### context
+An immutable object containing the complete configuration and state for the current task and session. It is composed of the following nested objects:
+  - `session`: Contains live data about the user's current session.
+  - `project`: The configuration object for the entire project, as defined during setup.
+  - `subjectGroup`: The configuration for the subject group the user belongs to.
+  - `task`: The configuration for the currently active task.
+  - `options`: An object containing custom options for the script. If a script is configured at both the subject group and task level, the options from the subject group will take precedence.
 
-- `channel` is used to send and receive messages using an interface similar to a [broadcast channel](https://developer.mozilla.org/en-US/docs/Web/API/Broadcast_Channel_API):
+  Here is an example of how you might use the `context` object:
+
+  ```javascript
+  window.setTaskHook('preparation', ({ context }) => {
+    // Log the current session ID
+    console.log('Current session ID:', context.session.id);
+
+    // Access the name of the current task
+    console.log('Current task name:', context.task.name);
+
+    // Use a custom option defined for the script
+    if (context.options.enableHighlighting) {
+      // custom logic to highlight elements
+    }
+  });
+  ```
+
+  The `session` object provides real-time information about the user's interaction state:
+
+  ```javascript
+  {
+    id,
+    projectId,
+    groupId,
+    subjectId,
+    origin,
+    params,
+    randomization,
+    referer,
+    result,
+    stage,
+    taskIndex
+  }
+  ```
+
+  - **`id`**: A unique identifier for the current session.
+  - **`projectId`**, **`groupId`**, **`subjectId`**: Identifiers for the project, subject group, and the specific subject.
+  - **`origin`**: The origin URL where the session was initiated.
+  - **`params`**: An object containing the query parameters from the URL that started the session. This object can be modified during the session using `utils.setSessionParam()`. At the end of the session, these parameters are appended to the return URL.
+  - **`randomization`**: If task randomization is enabled, this array holds the randomized sequence of task indexes.
+  - **`referer`**: The referrer URL.
+  - **`result`**: The current result state of the session.
+  - **`stage`**: The current lifecycle stage of the task (e.g., `preparation`, `recording`, `completion`).
+  - **`taskIndex`**: The index of the current task being executed.
+
+### channel
+Used to send and receive messages using an interface similar to a [broadcast channel](https://developer.mozilla.org/en-US/docs/Web/API/Broadcast_Channel_API):
 
   ```javascript
   window.setTaskHook('recording', ({ channel }) => {
@@ -89,7 +146,8 @@ The argument consists of the following fields
 
   For more info on the events received and ways to filter for them, see the [event objects section](#event-objects).
 
-- `state` is used to share state between jobs. All jobs can return an object that will be merged with the current state and available for all subsequent jobs. Scripts are free to use the global namespace, but we recommend using the `state` object to avoid conflicts and keep things tidy.
+### state
+Used to share state between jobs. All jobs can return an object that will be merged with the current state and available for all subsequent jobs. Scripts are free to use the global namespace, but we recommend using the `state` object to avoid conflicts and keep things tidy.
 
   ```javascript
   window.setInitHook(({ state }) => ({ taskCount: 0 }));
@@ -110,7 +168,8 @@ The argument consists of the following fields
   tasks completed: 2
   ```
 
-- `render` is a utility function for rendering custom content. It's meant as a way to help hide and manage the rendered content after each stage
+### render
+A utility function for rendering custom content. It's meant as a way to help hide and manage the rendered content after each stage
 
   ```javascript
   window.setTaskHook(
@@ -127,52 +186,85 @@ The argument consists of the following fields
   );
   ```
 
-- `utils` commonly used utility functions.
+### utils
+An object containing commonly used utility functions to simplify script development. The `content window` referenced in some of the functions is the window where the content is displayed, which is typically the top window but can also be an iframe.
 
-  ```javascript
-  /*
-    - sleep
-    - waitFor, waitForElement, waitForElements
-    - createScript, createStyles, injectStyles
-    - showMessage
-  */
-  window.setTaskHook('preparation', async ({ utils }) => {
-    // wait half a second
-    await utils.sleep(500);
+  - **`sleep(milliseconds)`**
+    Pauses the execution for a specified amount of time.
+    ```javascript
+    await utils.sleep(500); // waits for half a second
+    ```
 
-    // create a script tag from a source url
+  - **`createScript(url)`**
+    Creates a `<script>` tag from a source URL and appends it to the content window's document, returning a promise that resolves when the script has loaded.
+    ```javascript
     await utils.createScript('https://external.com/sdk.js');
+    ```
 
-    // create a style tag from a source url
+  - **`createStyles(url)`**
+    Creates a `<link>` tag for a stylesheet from a source URL and appends it to the content window's document, returning a promise that resolves when the styles have loaded.
+    ```javascript
     await utils.createStyles('https://external.com/styles.css');
+    ```
 
-    // create a style tag from a style string
+  - **`injectStyles(cssString)`**
+    Creates a `<style>` tag from a string containing CSS rules and injects it into the content window's document.
+    ```javascript
     utils.injectStyles(`
       #test-id {
         border: 1px solid red;
       }
     `);
+    ```
 
-    // wait for a condition to evaluate truthy. optional arguments: interval(ms), timeout(ms)
-    await utils.waitFor(() => window.SDK /*, 500, 5000 */);
+  - **`waitFor(condition, interval, timeout)`**
+    Waits for a `condition` function to return a truthy value. It checks the condition repeatedly at a specified `interval` (in milliseconds) until it succeeds or a `timeout` (in milliseconds) is reached.
+    ```javascript
+    // waits for window.SDK to be available
+    const sdk = await utils.waitFor(() => window.SDK, 100, 5000);
+    ```
 
-    // wait for an element using css selectors
+  - **`waitForElement(selector)`**
+    Waits for a DOM element to be present in the content window's document that matches the provided CSS `selector`.
+    ```javascript
     const element = await utils.waitForElement('#test-id');
+    ```
 
-    // wait for multiple elements using css selectors
+  - **`waitForElements(selector)`**
+    Waits for multiple DOM elements to be present in the content window's document that match the provided CSS `selector`.
+    ```javascript
     const elements = await utils.waitForElements('a.selected');
+    ```
 
-    // a key / value pair that will be added to the session params and reported back to the survey
+  - **`setSessionParam(key, value)`**
+    Sets a key-value pair in the session's `params` object. Both the key and value must be strings, as they will be appended as query parameters to the survey return URL.
+    ```javascript
     await utils.setSessionParam('consentFormAccepted', '1');
+    ```
 
-    // Display a centered message and wait for the button to be clicked
-    await utils.showMessage({ message: `Ok, let's start.<br><br>Press continue!` button: 'Continue' });
+  - **`showMessage({ message, button })`**
+    Displays a centered modal with a message and a button. It returns a promise that resolves when the user clicks the button.
+    ```javascript
+    await utils.showMessage({
+      message: `Ok, let's start.<br><br>Press continue!`,
+      button: 'Continue'
+    });
+    ```
 
-    // Display a ok/cancel dialog
-    // todo change this to promise
-    const accepted = await utils.confirm({ message: 'We would like to access your camera' confirmText: 'Ok', rejectText: 'Cancel'  });
-  });
-  ```
+  - **`confirm({ message, confirmText, rejectText })`**
+    Displays a confirmation dialog with a message and two buttons (e.g., "Ok" and "Cancel"). It returns a promise that resolves with `true` if the confirmation button is clicked and `false` otherwise.
+    ```javascript
+    const accepted = await utils.confirm({
+      message: 'We would like to access your camera',
+      confirmText: 'Ok',
+      rejectText: 'Cancel'
+    });
+    ```
+  - **`getWindow()`**
+    Returns the `window` object where the content is being displayed. This is typically the top window, but it could be an iframe in some scenarios.
+    ```javascript
+    const contentWindow = await utils.getWindow();
+    ```
 
 # event objects
 

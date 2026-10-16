@@ -12,28 +12,6 @@ The In Context API lets you create and edit In Context projects from your own sy
 
 Related guides: [survey integration](https://incontext-research.com/docs/surveyintegration/), [supported ad formats](https://incontext-research.com/docs/adsupport/), [system requirements](https://incontext-research.com/docs/requirements/), [metrics per format](https://e2.ms/apimetrics), [supported languages per context](https://e2.ms/local), [plugins and webhooks](https://github.com/eye-square/docs/blob/master/plugins/plugins.md).
 
-## Contents
-
-- [Quickstart](#quickstart)
-- [Concepts](#concepts)
-- [Authentication](#authentication)
-- [Making requests](#making-requests)
-- [Using the explorer](#using-the-explorer)
-- [Pagination](#pagination)
-- [Errors](#errors)
-- [Task data and format discovery](#task-data-and-format-discovery)
-- [Project reference](#project-reference)
-- [Supported context types](#supported-context-types)
-- [Presenter and setup tasks](#presenter-and-setup-tasks)
-- [Instructions](#instructions)
-- [Deployment filters](#deployment-filters)
-- [Sending respondents and survey integration](#sending-respondents-and-survey-integration)
-- [Success evaluation](#success-evaluation)
-- [Query test results](#query-test-results)
-- [Organization settings](#organization-settings)
-- [Changelog](#changelog)
-- [Support](#support)
-
 ---
 
 # Quickstart
